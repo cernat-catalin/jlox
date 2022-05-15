@@ -3,13 +3,12 @@ package ccs.jlox;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
 public class Lox {
-  static boolean hadError = false;
+  static boolean HAD_ERROR = false;
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
@@ -22,22 +21,25 @@ public class Lox {
     }
   }
 
+  static void error(int line, String message) {
+    report(line, "", message);
+  }
+
   private static void runFile(String path) throws IOException {
-    byte[] bytes = Files.readAllBytes(Paths.get(path));
-    run(new String(bytes, Charset.defaultCharset()));
-    if (hadError) System.exit(65);
+    run(Files.readString(Paths.get(path)));
+    if (HAD_ERROR) System.exit(65);
   }
 
   private static void runPrompt() throws IOException {
     InputStreamReader input = new InputStreamReader(System.in);
     BufferedReader reader = new BufferedReader(input);
 
-    for (;;) {
+    for (; ; ) {
       System.out.println("> ");
       String line = reader.readLine();
       if (line == null) break;
       run(line);
-      hadError = false;
+      HAD_ERROR = false;
     }
   }
 
@@ -50,12 +52,8 @@ public class Lox {
     }
   }
 
-  static void error(int line, String message) {
-    report(line, "", message);
-  }
-
   private static void report(int line, String where, String message) {
     System.err.printf("[line %d] Error%s: %s\n", line, where, message);
-    hadError = true;
+    HAD_ERROR = true;
   }
 }
