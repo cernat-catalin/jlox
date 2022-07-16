@@ -104,24 +104,37 @@ public class Scanner {
       case '=' -> addToken(match('=') ? EQUAL_EQUAL : EQUAL);
       case '<' -> addToken(match('=') ? LESS_EQUAL : LESS);
       case '>' -> addToken(match('=') ? GREATER_EQUAL : GREATER);
-      case '/' -> {
-        if (match('/')) {
-          comment();
-        } else {
-          addToken(SLASH);
-        }
-      }
-      case ' ', '\r', '\t' -> {}
-      case '\n' -> line++;
+      case '/' -> handleSlash();
+      case ' ', '\r', '\t' -> handleWhiteSpace();
+      case '\n' -> incrementLine();
       case '"' -> string();
-      default -> {
-        if (isDigit(c)) {
-          number();
-        } else if (isAlpha(c)) {
-          identifier();
-        }
-        Lox.error(line, "Unexpected character.");
-      }
+      default -> handleDefault(c);
+    }
+  }
+
+  void incrementLine() {
+    line++;
+  }
+
+  void handleWhiteSpace() {
+    // NO-OP
+  }
+
+  void handleSlash() {
+    if (match('/')) {
+      comment();
+    } else {
+      addToken(SLASH);
+    }
+  }
+
+  void handleDefault(char c) {
+    if (isDigit(c)) {
+      number();
+    } else if (isAlpha(c)) {
+      identifier();
+    } else {
+      Lox.error(line, "Unexpected character.");
     }
   }
 
