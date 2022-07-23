@@ -9,10 +9,12 @@ import java.util.List;
 
 public class Lox {
   private static boolean hadError = false;
+  private static boolean hadRuntimeError = false;
+  private static final Interpreter interpreter = new Interpreter();
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
-      System.out.println("Usage: jlox [scirpt]");
+      System.out.println("Usage: jlox [script]");
       System.exit(64);
     } else if (args.length == 1) {
       runFile(args[0]);
@@ -21,21 +23,10 @@ public class Lox {
     }
   }
 
-  static void error(Token token, String message) {
-    if (token.type() == TokenType.EOF) {
-      report(token.line(), " at end", message);
-    } else {
-      report(token.line(), " at '" + token.lexeme() + "'", message);
-    }
-  }
-
-  static void error(int line, String message) {
-    report(line, "", message);
-  }
-
   private static void runFile(String path) throws IOException {
     run(Files.readString(Paths.get(path)));
     if (hadError) System.exit(65);
+    if (hadRuntimeError) System.exit(70);
   }
 
   private static void runPrompt() throws IOException {
@@ -43,7 +34,7 @@ public class Lox {
     BufferedReader reader = new BufferedReader(input);
 
     for (; ; ) {
-      System.out.println("> ");
+      System.out.print("> ");
       String line = reader.readLine();
       if (line == null) break;
       run(line);
@@ -59,7 +50,24 @@ public class Lox {
     Expr expression = parser.parse();
 
     if (hadError) return;
-    System.out.println(new AstPrinter().print(expression));
+    interpreter.interpret(expression);
+  }
+
+  static void runtimeError(RuntimeError error) {
+    System.err.println(error.getMessage() + "\n[line " + error.getToken().line() + "]");
+    hadRuntimeError = true;
+  }
+
+  static void error(Token token, String message) {
+    if (token.type() == TokenType.EOF) {
+      report(token.line(), " at end", message);
+    } else {
+      report(token.line(), " at '" + token.lexeme() + "'", message);
+    }
+  }
+
+  static void error(int line, String message) {
+    report(line, "", message);
   }
 
   private static void report(int line, String where, String message) {
