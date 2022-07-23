@@ -8,6 +8,7 @@ public final class AstPrinter {
       case Expr.Binary binary -> parenthesize(
           binary.operator().lexeme(), binary.left(), binary.right());
       case Expr.Grouping grouping -> parenthesize("group", grouping.expr());
+      case Expr.Variable variable -> parenthesize("var", variable);
     };
   }
 

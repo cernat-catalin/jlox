@@ -4,10 +4,13 @@ import static ccs.jlox.Expr.Binary;
 import static ccs.jlox.Expr.Grouping;
 import static ccs.jlox.Expr.Literal;
 import static ccs.jlox.Expr.Unary;
+import static ccs.jlox.Expr.Variable;
 
 import java.util.List;
 
 public final class Interpreter {
+  private final Environment environment = new Environment();
+
   public void interpret(List<Stmt> stmts) {
     try {
       for (Stmt stmt : stmts) {
@@ -20,9 +23,10 @@ public final class Interpreter {
 
   private void interpretStmt(Stmt stmt) {
     switch (stmt) {
-      case Stmt.Print printStmt-> interpretPrintStmt(printStmt);
+      case Stmt.Print printStmt -> interpretPrintStmt(printStmt);
       case Stmt.Expression exprStmt -> interpretExprStmt(exprStmt);
-    };
+      case Stmt.Var varStmt -> interpretVarStmt(varStmt);
+    }
   }
 
   private void interpretPrintStmt(Stmt.Print printStmt) {
@@ -34,12 +38,21 @@ public final class Interpreter {
     interpretExpr(exprStmt.expr());
   }
 
+  private void interpretVarStmt(Stmt.Var varStmt) {
+    Object value = null;
+    if (varStmt.initializer() != null) {
+      value = interpretExpr(varStmt.initializer());
+    }
+    environment.define(varStmt.name().lexeme(), value);
+  }
+
   private Object interpretExpr(Expr expr) {
     return switch (expr) {
       case Literal lit -> interpretLiteral(lit);
       case Unary unary -> interpretUnary(unary);
       case Binary binary -> interpretBinary(binary);
       case Grouping group -> interpretGrouping(group);
+      case Variable variable -> interpretVariable(variable);
     };
   }
 
@@ -49,6 +62,10 @@ public final class Interpreter {
 
   private Object interpretGrouping(Grouping group) {
     return interpretExpr(group.expr());
+  }
+
+  private Object interpretVariable(Variable variable) {
+    return environment.get(variable.name());
   }
 
   private Object interpretUnary(Unary unary) {

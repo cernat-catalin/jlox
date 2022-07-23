@@ -4,12 +4,14 @@ import static ccs.jlox.TokenType.BANG;
 import static ccs.jlox.TokenType.BANG_EQUAL;
 import static ccs.jlox.TokenType.CLASS;
 import static ccs.jlox.TokenType.EOF;
+import static ccs.jlox.TokenType.EQUAL;
 import static ccs.jlox.TokenType.EQUAL_EQUAL;
 import static ccs.jlox.TokenType.FALSE;
 import static ccs.jlox.TokenType.FOR;
 import static ccs.jlox.TokenType.FUN;
 import static ccs.jlox.TokenType.GREATER;
 import static ccs.jlox.TokenType.GREATER_EQUAL;
+import static ccs.jlox.TokenType.IDENTIFIER;
 import static ccs.jlox.TokenType.IF;
 import static ccs.jlox.TokenType.LEFT_PAREN;
 import static ccs.jlox.TokenType.LESS;
@@ -44,11 +46,33 @@ public final class Parser {
   public List<Stmt> parse() {
     List<Stmt> statements = new ArrayList<>();
 
-    while(!isAtEnd()) {
-      statements.add(statement());
+    while (!isAtEnd()) {
+      statements.add(declaration());
     }
 
     return statements;
+  }
+
+  private Stmt declaration() {
+    try {
+      if (match(VAR)) return varDeclaration();
+      return statement();
+    } catch (ParseError error) {
+      synchronize();
+      return null;
+    }
+  }
+
+  private Stmt varDeclaration() {
+    Token name = consume(IDENTIFIER, "Expect variable name.");
+    Expr initializer = null;
+
+    if (match(EQUAL)) {
+      initializer = expression();
+    }
+
+    consume(SEMICOLON, "Expect ';' after variable declaration.");
+    return new Stmt.Var(name, initializer);
   }
 
   private Stmt statement() {
@@ -62,11 +86,12 @@ public final class Parser {
     return new Stmt.Print(value);
   }
 
-  private Stmt expressionStatement()   {
+  private Stmt expressionStatement() {
     Expr expr = expression();
     consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Expression(expr);
   }
+
   private Expr expression() {
     return equality();
   }
@@ -126,6 +151,9 @@ public final class Parser {
     if (match(NIL)) return new Expr.Literal(null);
     if (match(NUMBER, STRING)) {
       return new Expr.Literal(previous().literal());
+    }
+    if (match(IDENTIFIER)) {
+      return new Expr.Variable(previous());
     }
     if (match(LEFT_PAREN)) {
       Expr expr = expression();

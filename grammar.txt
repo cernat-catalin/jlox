@@ -5,8 +5,16 @@
 # 4. Factor         (*, /)              Left-assoc
 # 5. Unary          (!, -)              Right-assoc
 
+# The "declaration" non-terminal is introduced so that we
+# can differentiate between different types of expressions,
+# so that we can avoid: `if (condition) var a = 12;`
 
-program         -> statement* EOF
+
+program         -> declaration* EOF
+
+declaration     -> varDecl
+                 | statement;
+varDecl         -> "var" IDENTIFIER ("=" expression)? ";"
 
 statement       -> exprStmt
                  | printStmt
@@ -22,3 +30,4 @@ unary           -> ("!", "-") unary
                  | primary
 primary         -> NUMBER | STRING | "true" | "false" | "nil"
                  | "(" expression ")"
+                 | IDENTIFIER
