@@ -1,2 +1,6 @@
 print "Hello World!";
 print 15 + 2 * 10;
+var a = 100 * 2;
+print a;
+a = 100 / 2 - 1 + 1;
+print a;

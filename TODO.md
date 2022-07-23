@@ -9,3 +9,4 @@
 ## Other
 - `Scanner` is kind of state based. Can we reduce that?
 - Maybe disallow uninitialized variable declarations?
+- Maybe don't make assignment an expression but rather a statement?

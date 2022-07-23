@@ -1,5 +1,6 @@
 package ccs.jlox;
 
+import static ccs.jlox.Expr.Assignment;
 import static ccs.jlox.Expr.Binary;
 import static ccs.jlox.Expr.Grouping;
 import static ccs.jlox.Expr.Literal;
@@ -49,10 +50,11 @@ public final class Interpreter {
   private Object interpretExpr(Expr expr) {
     return switch (expr) {
       case Literal lit -> interpretLiteral(lit);
+      case Variable variable -> interpretVariable(variable);
+      case Assignment assignment -> interpretAssignment(assignment);
       case Unary unary -> interpretUnary(unary);
       case Binary binary -> interpretBinary(binary);
       case Grouping group -> interpretGrouping(group);
-      case Variable variable -> interpretVariable(variable);
     };
   }
 
@@ -60,12 +62,14 @@ public final class Interpreter {
     return lit.value();
   }
 
-  private Object interpretGrouping(Grouping group) {
-    return interpretExpr(group.expr());
-  }
-
   private Object interpretVariable(Variable variable) {
     return environment.get(variable.name());
+  }
+
+  private Object interpretAssignment(Assignment assignment) {
+    Object value = interpretExpr(assignment.value());
+    environment.assign(assignment.name(), value);
+    return value;
   }
 
   private Object interpretUnary(Unary unary) {
@@ -127,6 +131,10 @@ public final class Interpreter {
       }
       default -> new IllegalStateException();
     };
+  }
+
+  private Object interpretGrouping(Grouping group) {
+    return interpretExpr(group.expr());
   }
 
   private static boolean isEqual(Object a, Object b) {

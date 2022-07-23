@@ -10,4 +10,6 @@ public sealed interface Expr {
   record Unary(Token operator, Expr right) implements Expr {}
 
   record Variable(Token name) implements Expr {}
+
+  record Assignment(Token name, Expr value) implements Expr {}
 }
