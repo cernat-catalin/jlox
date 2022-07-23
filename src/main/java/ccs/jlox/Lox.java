@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class Lox {
-  static boolean HAD_ERROR = false;
+  private static boolean hadError = false;
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
@@ -21,13 +21,21 @@ public class Lox {
     }
   }
 
+  static void error(Token token, String message) {
+    if (token.type() == TokenType.EOF) {
+      report(token.line(), " at end", message);
+    } else {
+      report(token.line(), " at '" + token.lexeme() + "'", message);
+    }
+  }
+
   static void error(int line, String message) {
     report(line, "", message);
   }
 
   private static void runFile(String path) throws IOException {
     run(Files.readString(Paths.get(path)));
-    if (HAD_ERROR) System.exit(65);
+    if (hadError) System.exit(65);
   }
 
   private static void runPrompt() throws IOException {
@@ -39,7 +47,7 @@ public class Lox {
       String line = reader.readLine();
       if (line == null) break;
       run(line);
-      HAD_ERROR = false;
+      hadError = false;
     }
   }
 
@@ -47,13 +55,15 @@ public class Lox {
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
 
-    for (Token token : tokens) {
-      System.out.println(token);
-    }
+    Parser parser = new Parser(tokens);
+    Expr expression = parser.parse();
+
+    if (hadError) return;
+    System.out.println(new AstPrinter().print(expression));
   }
 
   private static void report(int line, String where, String message) {
-    System.err.printf("[line %d] Error%s: %s\n", line, where, message);
-    HAD_ERROR = true;
+    System.err.printf("[line %d] Error%s: %s%n", line, where, message);
+    hadError = true;
   }
 }

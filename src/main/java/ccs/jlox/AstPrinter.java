@@ -1,6 +1,6 @@
 package ccs.jlox;
 
-public class AstPrinter {
+public final class AstPrinter {
   public String print(Expr expr) {
     return switch (expr) {
       case Expr.Literal lit -> (lit.value() == null) ? "nil" : lit.value().toString();

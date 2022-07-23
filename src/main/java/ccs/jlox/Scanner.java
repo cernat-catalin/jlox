@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Scanner {
+public final class Scanner {
   private static final Map<String, TokenType> KEYWORDS = new HashMap<>();
 
   static {
@@ -77,7 +77,7 @@ public class Scanner {
     this.source = source;
   }
 
-  List<Token> scanTokens() {
+  public List<Token> scanTokens() {
     while (!isAtEnd()) {
       // We are at the beginning of the next lexeme.
       start = current;
@@ -112,15 +112,15 @@ public class Scanner {
     }
   }
 
-  void incrementLine() {
+  private void incrementLine() {
     line++;
   }
 
-  void handleWhiteSpace() {
+  private void handleWhiteSpace() {
     // NO-OP
   }
 
-  void handleSlash() {
+  private void handleSlash() {
     if (match('/')) {
       comment();
     } else {
@@ -128,7 +128,7 @@ public class Scanner {
     }
   }
 
-  void handleDefault(char c) {
+  private void handleDefault(char c) {
     if (isDigit(c)) {
       number();
     } else if (isAlpha(c)) {
