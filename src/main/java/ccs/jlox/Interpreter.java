@@ -5,14 +5,33 @@ import static ccs.jlox.Expr.Grouping;
 import static ccs.jlox.Expr.Literal;
 import static ccs.jlox.Expr.Unary;
 
+import java.util.List;
+
 public final class Interpreter {
-  public void interpret(Expr expr) {
+  public void interpret(List<Stmt> stmts) {
     try {
-      Object value = interpretExpr(expr);
-      System.out.println(stringify(value));
+      for (Stmt stmt : stmts) {
+        interpretStmt(stmt);
+      }
     } catch (RuntimeError error) {
       Lox.runtimeError(error);
     }
+  }
+
+  private void interpretStmt(Stmt stmt) {
+    switch (stmt) {
+      case Stmt.Print printStmt-> interpretPrintStmt(printStmt);
+      case Stmt.Expression exprStmt -> interpretExprStmt(exprStmt);
+    };
+  }
+
+  private void interpretPrintStmt(Stmt.Print printStmt) {
+    Object value = interpretExpr(printStmt.expr());
+    System.out.println(stringify(value));
+  }
+
+  private void interpretExprStmt(Stmt.Expression exprStmt) {
+    interpretExpr(exprStmt.expr());
   }
 
   private Object interpretExpr(Expr expr) {
