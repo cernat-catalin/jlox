@@ -10,7 +10,7 @@ import static ccs.jlox.Expr.Variable;
 import java.util.List;
 
 public final class Interpreter {
-  private final Environment environment = new Environment();
+  private Environment environment = new Environment();
 
   public void interpret(List<Stmt> stmts) {
     try {
@@ -27,6 +27,7 @@ public final class Interpreter {
       case Stmt.Print printStmt -> interpretPrintStmt(printStmt);
       case Stmt.Expression exprStmt -> interpretExprStmt(exprStmt);
       case Stmt.Var varStmt -> interpretVarStmt(varStmt);
+      case Stmt.Block blockStmt -> interpretBlockStmt(blockStmt);
     }
   }
 
@@ -45,6 +46,20 @@ public final class Interpreter {
       value = interpretExpr(varStmt.initializer());
     }
     environment.define(varStmt.name().lexeme(), value);
+  }
+
+  private void interpretBlockStmt(Stmt.Block blockStmt) {
+    Environment newEnvironment = new Environment(environment);
+    Environment previousEnvironment = this.environment;
+
+    try {
+      this.environment = newEnvironment;
+      for (Stmt stmt : blockStmt.statements()) {
+        interpretStmt(stmt);
+      }
+    } finally {
+      this.environment = previousEnvironment;
+    }
   }
 
   private Object interpretExpr(Expr expr) {

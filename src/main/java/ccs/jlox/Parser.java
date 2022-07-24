@@ -13,6 +13,7 @@ import static ccs.jlox.TokenType.GREATER;
 import static ccs.jlox.TokenType.GREATER_EQUAL;
 import static ccs.jlox.TokenType.IDENTIFIER;
 import static ccs.jlox.TokenType.IF;
+import static ccs.jlox.TokenType.LEFT_BRACE;
 import static ccs.jlox.TokenType.LEFT_PAREN;
 import static ccs.jlox.TokenType.LESS;
 import static ccs.jlox.TokenType.LESS_EQUAL;
@@ -22,6 +23,7 @@ import static ccs.jlox.TokenType.NUMBER;
 import static ccs.jlox.TokenType.PLUS;
 import static ccs.jlox.TokenType.PRINT;
 import static ccs.jlox.TokenType.RETURN;
+import static ccs.jlox.TokenType.RIGHT_BRACE;
 import static ccs.jlox.TokenType.RIGHT_PAREN;
 import static ccs.jlox.TokenType.SEMICOLON;
 import static ccs.jlox.TokenType.SLASH;
@@ -77,6 +79,7 @@ public final class Parser {
 
   private Stmt statement() {
     if (match(PRINT)) return printStatement();
+    if (match(LEFT_BRACE)) return blockStatement();
     return expressionStatement();
   }
 
@@ -84,6 +87,15 @@ public final class Parser {
     Expr value = expression();
     consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
+  }
+
+  private Stmt blockStatement() {
+    List<Stmt> statements = new ArrayList<>();
+    while (!check(RIGHT_BRACE) && !isAtEnd()) {
+      statements.add(declaration());
+    }
+    consume(RIGHT_BRACE, "Expect '}' after block.");
+    return new Stmt.Block(statements);
   }
 
   private Stmt expressionStatement() {
