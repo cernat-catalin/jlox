@@ -1,5 +1,6 @@
 package ccs.jlox;
 
+import static ccs.jlox.TokenType.AND;
 import static ccs.jlox.TokenType.BANG;
 import static ccs.jlox.TokenType.BANG_EQUAL;
 import static ccs.jlox.TokenType.CLASS;
@@ -21,6 +22,7 @@ import static ccs.jlox.TokenType.LESS_EQUAL;
 import static ccs.jlox.TokenType.MINUS;
 import static ccs.jlox.TokenType.NIL;
 import static ccs.jlox.TokenType.NUMBER;
+import static ccs.jlox.TokenType.OR;
 import static ccs.jlox.TokenType.PLUS;
 import static ccs.jlox.TokenType.PRINT;
 import static ccs.jlox.TokenType.RETURN;
@@ -123,7 +125,7 @@ public final class Parser {
   }
 
   private Expr assignment() {
-    Expr expr = equality();
+    Expr expr = or();
 
     if (match(EQUAL)) {
       Token equals = previous();
@@ -135,6 +137,26 @@ public final class Parser {
       error(equals, "Invalid assignment target.");
     }
 
+    return expr;
+  }
+
+  private Expr or() {
+    Expr expr = and();
+    while (match(OR)) {
+      Token operator = previous();
+      Expr right = and();
+      expr = new Expr.Logical(expr, operator, right);
+    }
+    return expr;
+  }
+
+  private Expr and() {
+    Expr expr = equality();
+    while (match(AND)) {
+      Token operator = previous();
+      Expr right = equality();
+      expr = new Expr.Logical(expr, operator, right);
+    }
     return expr;
   }
 

@@ -67,6 +67,7 @@ public final class Interpreter {
   private Object evaluate(Expr expr) {
     return switch (expr) {
       case Expr.Literal lit -> evaluateLiteral(lit);
+      case Expr.Logical log -> evaluateLogical(log);
       case Expr.Variable variable -> evaluateVariable(variable);
       case Expr.Assignment assignment -> evaluateAssignment(assignment);
       case Expr.Unary unary -> evaluateUnary(unary);
@@ -77,6 +78,16 @@ public final class Interpreter {
 
   private Object evaluateLiteral(Expr.Literal lit) {
     return lit.value();
+  }
+
+  private Object evaluateLogical(Expr.Logical log) {
+    Object left = evaluate(log.left());
+    if (log.operator().type() == TokenType.OR) {
+      if (isTruthy(left)) return left;
+    } else {
+      if (!isTruthy(left)) return left;
+    }
+    return evaluate(log.right());
   }
 
   private Object evaluateVariable(Expr.Variable variable) {
