@@ -1,7 +1,12 @@
 package ccs.jlox;
 
+import java.util.List;
+
 public sealed interface Expr {
   record Binary(Expr left, Token operator, Expr right) implements Expr {}
+
+  // We keep the token paren here for error reporting
+  record Call(Expr callee, Token paren, List<Expr> arguments) implements Expr {}
 
   record Grouping(Expr expr) implements Expr {}
 

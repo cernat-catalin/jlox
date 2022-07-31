@@ -11,7 +11,11 @@ public sealed interface Stmt {
 
   record Var(Token name, Expr initializer) implements Stmt {}
 
+  record Function(Token name, List<Token> params, List<Stmt> body) implements Stmt {}
+
   record Print(Expr expr) implements Stmt {}
+
+  record Return(Token keyword, Expr value) implements Stmt {}
 
   record Block(List<Stmt> statements) implements Stmt {}
 }

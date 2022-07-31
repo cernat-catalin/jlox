@@ -1,9 +1,32 @@
 package ccs.jlox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class Interpreter {
-  private Environment environment = new Environment();
+  private final Environment globals = new Environment();
+  private Environment environment = globals;
+
+  Interpreter() {
+    globals.define(
+        "clock",
+        new LoxCallable() {
+          @Override
+          public int arity() {
+            return 0;
+          }
+
+          @Override
+          public Object call(Interpreter interpreter, List<Object> arguments) {
+            return System.currentTimeMillis() / 1000.0;
+          }
+
+          @Override
+          public String toString() {
+            return "<native fn>";
+          }
+        });
+  }
 
   public void execute(List<Stmt> stmts) {
     try {
@@ -19,9 +42,11 @@ public final class Interpreter {
     switch (stmt) {
       case Stmt.If ifStmt -> executeIfStmt(ifStmt);
       case Stmt.Print printStmt -> executePrintStmt(printStmt);
+      case Stmt.Return returnStmt -> executeReturnStmt(returnStmt);
       case Stmt.While whileStmt -> executeWhileStmt(whileStmt);
       case Stmt.Expression exprStmt -> executeExprStmt(exprStmt);
       case Stmt.Var varStmt -> executeVarStmt(varStmt);
+      case Stmt.Function functionStmt -> executeFunctionStmt(functionStmt);
       case Stmt.Block blockStmt -> executeBlockStmt(blockStmt);
     }
   }
@@ -37,6 +62,12 @@ public final class Interpreter {
   private void executePrintStmt(Stmt.Print printStmt) {
     Object value = evaluate(printStmt.expr());
     System.out.println(stringify(value));
+  }
+
+  private void executeReturnStmt(Stmt.Return returnStmt) {
+    Object value = null;
+    if (returnStmt.value() != null) value = evaluate(returnStmt.value());
+    throw new Return(value);
   }
 
   private void executeWhileStmt(Stmt.While whileStmt) {
@@ -57,17 +88,24 @@ public final class Interpreter {
     environment.define(varStmt.name().lexeme(), value);
   }
 
-  private void executeBlockStmt(Stmt.Block blockStmt) {
-    Environment newEnvironment = new Environment(environment);
-    Environment previousEnvironment = this.environment;
+  private void executeFunctionStmt(Stmt.Function functionStmt) {
+    LoxFunction function = new LoxFunction(functionStmt);
+    environment.define(functionStmt.name().lexeme(), function);
+  }
 
+  private void executeBlockStmt(Stmt.Block blockStmt) {
+    executeBlock(blockStmt.statements(), new Environment(environment));
+  }
+
+  void executeBlock(List<Stmt> statements, Environment environment) {
+    Environment previous = this.environment;
     try {
-      this.environment = newEnvironment;
-      for (Stmt stmt : blockStmt.statements()) {
-        execute(stmt);
+      this.environment = environment;
+      for (Stmt statement : statements) {
+        execute(statement);
       }
     } finally {
-      this.environment = previousEnvironment;
+      this.environment = previous;
     }
   }
 
@@ -80,6 +118,7 @@ public final class Interpreter {
       case Expr.Unary unary -> evaluateUnary(unary);
       case Expr.Binary binary -> evaluateBinary(binary);
       case Expr.Grouping group -> evaluateGrouping(group);
+      case Expr.Call call -> evaluateCall(call);
     };
   }
 
@@ -172,6 +211,26 @@ public final class Interpreter {
     return evaluate(group.expr());
   }
 
+  private Object evaluateCall(Expr.Call call) {
+    Object callee = evaluate(call.callee());
+    List<Object> arguments = new ArrayList<>();
+    for (Expr argument : call.arguments()) {
+      arguments.add(evaluate(argument));
+    }
+
+    if (!(callee instanceof LoxCallable function)) {
+      throw new RuntimeError(call.paren(), "Can only call functions and classes.");
+    }
+
+    if (arguments.size() != function.arity()) {
+      throw new RuntimeError(
+          call.paren(),
+          "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+    }
+
+    return function.call(this, arguments);
+  }
+
   private static boolean isEqual(Object a, Object b) {
     if (a == null && b == null) return true;
     if (a == null) return false;
@@ -204,5 +263,9 @@ public final class Interpreter {
       return text;
     }
     return object.toString();
+  }
+
+  public Environment getGlobals() {
+    return globals;
   }
 }
