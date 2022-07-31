@@ -6,11 +6,13 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 public class Lox {
   private static boolean hadError = false;
   private static boolean hadRuntimeError = false;
   private static final Interpreter interpreter = new Interpreter();
+  private static String currentFile = "";
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
@@ -24,6 +26,7 @@ public class Lox {
   }
 
   static void runFile(String path) throws IOException {
+    currentFile = path;
     run(Files.readString(Paths.get(path)));
     if (hadError) System.exit(65);
     if (hadRuntimeError) System.exit(70);
@@ -71,7 +74,11 @@ public class Lox {
   }
 
   private static void report(int line, String where, String message) {
-    System.err.printf("[line %d] Error%s: %s%n", line, where, message);
+    if (!currentFile.equals("")) {
+      System.err.printf("[file %s] [line %d] Error%s: %s%n", currentFile, line, where, message);
+    } else {
+      System.err.printf("[line %d] Error%s: %s%n", line, where, message);
+    }
     hadError = true;
   }
 }

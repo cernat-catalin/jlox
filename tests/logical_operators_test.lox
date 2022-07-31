@@ -1,0 +1,23 @@
+print("Testing logical operators...");
+
+fun call_undefined_func() {
+  // this will cause an error
+  foo();
+}
+
+assert(!(false or false), "Logical or operator wrong result!");
+assert(true or false, "Logical or operator wrong result!");
+assert(false or true, "Logical or operator wrong result!");
+assert(true or true, "Logical or operator wrong result!");
+
+assert(!(false and false), "Logical and operator wrong result!");
+assert(!(true and false), "Logical and operator wrong result!");
+assert(!(false and true), "Logical and operator wrong result!");
+assert(true and true, "Logical and operator wrong result!");
+
+// Test short-circuit
+assert(true or call_undefined_func(), "Logical or operator wrong result!");
+assert(!(false and call_undefined_func()), "Logical and operator wrong result!");
+
+print("Finished testing logical operators.");
+print("");

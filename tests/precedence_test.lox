@@ -1,0 +1,23 @@
+print("Testing operator precedence...");
+
+// Unary before term
+assert(-1 + 1 == 0, "Operator precedence wrong result!");
+assert(-1 - 1 == -2, "Operator precedence wrong result!");
+
+// Factor before term
+assert(1 + 2 * 3 == 7, "Operator precedence wrong result!");
+assert(1 * 2 + 3 == 5, "Operator precedence wrong result!");
+assert(1 + 4 / 2 == 3, "Operator precedence wrong result!");
+assert(8 / 2 + 3 == 7, "Operator precedence wrong result!");
+
+assert(1 - 2 * 3 == -5, "Operator precedence wrong result!");
+assert(1 * 2 - 3 == -1, "Operator precedence wrong result!");
+assert(1 - 4 / 2 == -1, "Operator precedence wrong result!");
+assert(8 / 2 - 3 == 1, "Operator precedence wrong result!");
+
+// Grouping
+assert((1 + 2) * 3 == 9, "Operator precedence wrong result!");
+assert(2 * (2 - 6) == -8, "Operator precedence wrong result!");
+
+print("Finished testing operator precedence.");
+print("");

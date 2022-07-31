@@ -1,0 +1,11 @@
+print("Testing unary operators...");
+
+assert(-1 + 1 == 0, "Unary minus operator wrong result!");
+assert(--1 == 1, "Unary minus operator wrong result!");
+assert(---1 == -1, "Unary minus operator wrong result!");
+
+assert(!false, "Unary bang operator wrong result!");
+assert(!(1 + 1 == 0), "Unary bang operator wrong result!");
+
+print("Finished testing unary operators.");
+print("");

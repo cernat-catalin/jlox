@@ -1,0 +1,32 @@
+print("Testing looping...");
+
+var a = 0;
+var i = 1;
+while (i <= 10) {
+  a = a + i;
+  i = i + 1;
+}
+assert(a == 55, "Looping flow wrong result!");
+
+var b = 0;
+for (var j = 1; j <= 10; j = j + 1) {
+  b = b + j;
+}
+assert(b == 55, "Looping flow wrong result!");
+
+var j;
+for (j = 1; j <= 10; j = j + 1) {
+  b = b + j;
+}
+assert(b == 110, "Looping flow wrong result!");
+
+j = 1;
+for (; j <= 10;) {
+  b = b + j;
+  j = j + 1;
+}
+assert(b == 165, "Looping flow wrong result!");
+
+
+print("Finished testing looping.");
+print("");

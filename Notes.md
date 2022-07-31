@@ -15,6 +15,12 @@
 - Maybe don't make assignment an expression but rather a statement?
 - Maybe have `final` by default and introduce a `mut`?
 - Add support for `forEach` style for loops
+- Add `+=` and friends operator
+- Add `++` and operator
 - Make Lox statically typed
   - Check function arity at compile time
   - Should not be possible to _use_ variables/functions that are not declared
+
+## Extra added features:
+- Make `print` a native function
+- Add `assert` native function
