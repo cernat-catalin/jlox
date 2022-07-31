@@ -23,13 +23,13 @@ public class Lox {
     }
   }
 
-  private static void runFile(String path) throws IOException {
+  static void runFile(String path) throws IOException {
     run(Files.readString(Paths.get(path)));
     if (hadError) System.exit(65);
     if (hadRuntimeError) System.exit(70);
   }
 
-  private static void runPrompt() throws IOException {
+  static void runPrompt() throws IOException {
     InputStreamReader input = new InputStreamReader(System.in);
     BufferedReader reader = new BufferedReader(input);
 
@@ -54,7 +54,7 @@ public class Lox {
   }
 
   static void runtimeError(RuntimeError error) {
-    System.err.println(error.getMessage() + "\n[line " + error.getToken().line() + "]");
+    error(error.getToken().line(), error.getMessage());
     hadRuntimeError = true;
   }
 

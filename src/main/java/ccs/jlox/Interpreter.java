@@ -1,5 +1,7 @@
 package ccs.jlox;
 
+import ccs.jlox.ffi.AssertFunction;
+import ccs.jlox.ffi.ClockFunction;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,24 +10,8 @@ public final class Interpreter {
   private Environment environment = globals;
 
   Interpreter() {
-    globals.define(
-        "clock",
-        new LoxCallable() {
-          @Override
-          public int arity() {
-            return 0;
-          }
-
-          @Override
-          public Object call(Interpreter interpreter, List<Object> arguments) {
-            return System.currentTimeMillis() / 1000.0;
-          }
-
-          @Override
-          public String toString() {
-            return "<native fn>";
-          }
-        });
+    globals.define("clock", new ClockFunction());
+    globals.define("assert", new AssertFunction());
   }
 
   public void execute(List<Stmt> stmts) {
@@ -228,7 +214,7 @@ public final class Interpreter {
           "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
     }
 
-    return function.call(this, arguments);
+    return function.call(this, call.paren(), arguments);
   }
 
   private static boolean isEqual(Object a, Object b) {
