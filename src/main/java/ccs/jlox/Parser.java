@@ -3,6 +3,7 @@ package ccs.jlox;
 import static ccs.jlox.TokenType.BANG;
 import static ccs.jlox.TokenType.BANG_EQUAL;
 import static ccs.jlox.TokenType.CLASS;
+import static ccs.jlox.TokenType.ELSE;
 import static ccs.jlox.TokenType.EOF;
 import static ccs.jlox.TokenType.EQUAL;
 import static ccs.jlox.TokenType.EQUAL_EQUAL;
@@ -78,9 +79,22 @@ public final class Parser {
   }
 
   private Stmt statement() {
+    if (match(IF)) return ifStatement();
     if (match(PRINT)) return printStatement();
     if (match(LEFT_BRACE)) return blockStatement();
     return expressionStatement();
+  }
+
+  private Stmt ifStatement() {
+    consume(LEFT_PAREN, "Expect '(' after 'if'.");
+    Expr condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after if condition.");
+    Stmt thenBranch = statement();
+    Stmt elseBranch = null;
+    if (match(ELSE)) {
+      elseBranch = statement();
+    }
+    return new Stmt.If(condition, thenBranch, elseBranch);
   }
 
   private Stmt printStatement() {

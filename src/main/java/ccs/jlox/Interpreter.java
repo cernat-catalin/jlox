@@ -1,94 +1,96 @@
 package ccs.jlox;
 
-import static ccs.jlox.Expr.Assignment;
-import static ccs.jlox.Expr.Binary;
-import static ccs.jlox.Expr.Grouping;
-import static ccs.jlox.Expr.Literal;
-import static ccs.jlox.Expr.Unary;
-import static ccs.jlox.Expr.Variable;
-
 import java.util.List;
 
 public final class Interpreter {
   private Environment environment = new Environment();
 
-  public void interpret(List<Stmt> stmts) {
+  public void execute(List<Stmt> stmts) {
     try {
       for (Stmt stmt : stmts) {
-        interpretStmt(stmt);
+        execute(stmt);
       }
     } catch (RuntimeError error) {
       Lox.runtimeError(error);
     }
   }
 
-  private void interpretStmt(Stmt stmt) {
+  private void execute(Stmt stmt) {
     switch (stmt) {
-      case Stmt.Print printStmt -> interpretPrintStmt(printStmt);
-      case Stmt.Expression exprStmt -> interpretExprStmt(exprStmt);
-      case Stmt.Var varStmt -> interpretVarStmt(varStmt);
-      case Stmt.Block blockStmt -> interpretBlockStmt(blockStmt);
+      case Stmt.If ifStmt -> executeIfStmt(ifStmt);
+      case Stmt.Print printStmt -> executePrintStmt(printStmt);
+      case Stmt.Expression exprStmt -> executeExprStmt(exprStmt);
+      case Stmt.Var varStmt -> executeVarStmt(varStmt);
+      case Stmt.Block blockStmt -> executeBlockStmt(blockStmt);
     }
   }
 
-  private void interpretPrintStmt(Stmt.Print printStmt) {
-    Object value = interpretExpr(printStmt.expr());
+  public void executeIfStmt(Stmt.If ifStmt) {
+    if (isTruthy(evaluate(ifStmt.condition()))) {
+      execute(ifStmt.thenBranch());
+    } else if (ifStmt.elseBranch() != null) {
+      execute(ifStmt.elseBranch());
+    }
+  }
+
+  private void executePrintStmt(Stmt.Print printStmt) {
+    Object value = evaluate(printStmt.expr());
     System.out.println(stringify(value));
   }
 
-  private void interpretExprStmt(Stmt.Expression exprStmt) {
-    interpretExpr(exprStmt.expr());
+  private void executeExprStmt(Stmt.Expression exprStmt) {
+    evaluate(exprStmt.expr());
   }
 
-  private void interpretVarStmt(Stmt.Var varStmt) {
+  private void executeVarStmt(Stmt.Var varStmt) {
     Object value = null;
     if (varStmt.initializer() != null) {
-      value = interpretExpr(varStmt.initializer());
+      value = evaluate(varStmt.initializer());
     }
     environment.define(varStmt.name().lexeme(), value);
   }
 
-  private void interpretBlockStmt(Stmt.Block blockStmt) {
+  private void executeBlockStmt(Stmt.Block blockStmt) {
     Environment newEnvironment = new Environment(environment);
     Environment previousEnvironment = this.environment;
 
     try {
       this.environment = newEnvironment;
       for (Stmt stmt : blockStmt.statements()) {
-        interpretStmt(stmt);
+        execute(stmt);
       }
     } finally {
       this.environment = previousEnvironment;
     }
   }
 
-  private Object interpretExpr(Expr expr) {
+  private Object evaluate(Expr expr) {
     return switch (expr) {
-      case Literal lit -> interpretLiteral(lit);
-      case Variable variable -> interpretVariable(variable);
-      case Assignment assignment -> interpretAssignment(assignment);
-      case Unary unary -> interpretUnary(unary);
-      case Binary binary -> interpretBinary(binary);
-      case Grouping group -> interpretGrouping(group);
+      case Expr.Literal lit -> evaluateLiteral(lit);
+      case Expr.Variable variable -> evaluateVariable(variable);
+      case Expr.Assignment assignment -> evaluateAssignment(assignment);
+      case Expr.Unary unary -> evaluateUnary(unary);
+      case Expr.Binary binary -> evaluateBinary(binary);
+      case Expr.Grouping group -> evaluateGrouping(group);
     };
   }
 
-  private Object interpretLiteral(Literal lit) {
+  private Object evaluateLiteral(Expr.Literal lit) {
     return lit.value();
   }
 
-  private Object interpretVariable(Variable variable) {
+  private Object evaluateVariable(Expr.Variable variable) {
     return environment.get(variable.name());
   }
 
-  private Object interpretAssignment(Assignment assignment) {
-    Object value = interpretExpr(assignment.value());
+  private Object evaluateAssignment(Expr.Assignment assignment) {
+    Object value = evaluate(assignment.value());
     environment.assign(assignment.name(), value);
     return value;
   }
 
-  private Object interpretUnary(Unary unary) {
-    Object right = interpretExpr(unary.right());
+  private Object evaluateUnary(Expr.Unary unary) {
+    Object right = evaluate(unary.right());
 
     return switch (unary.operator().type()) {
       case MINUS -> {
@@ -100,9 +102,9 @@ public final class Interpreter {
     };
   }
 
-  private Object interpretBinary(Binary binary) {
-    Object left = interpretExpr(binary.left());
-    Object right = interpretExpr(binary.right());
+  private Object evaluateBinary(Expr.Binary binary) {
+    Object left = evaluate(binary.left());
+    Object right = evaluate(binary.right());
 
     return switch (binary.operator().type()) {
       case GREATER -> {
@@ -148,8 +150,8 @@ public final class Interpreter {
     };
   }
 
-  private Object interpretGrouping(Grouping group) {
-    return interpretExpr(group.expr());
+  private Object evaluateGrouping(Expr.Grouping group) {
+    return evaluate(group.expr());
   }
 
   private static boolean isEqual(Object a, Object b) {

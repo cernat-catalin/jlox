@@ -50,7 +50,7 @@ public class Lox {
     List<Stmt> stmts = parser.parse();
 
     if (hadError) return;
-    interpreter.interpret(stmts);
+    interpreter.execute(stmts);
   }
 
   static void runtimeError(RuntimeError error) {
