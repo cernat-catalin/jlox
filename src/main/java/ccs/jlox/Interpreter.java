@@ -19,6 +19,7 @@ public final class Interpreter {
     switch (stmt) {
       case Stmt.If ifStmt -> executeIfStmt(ifStmt);
       case Stmt.Print printStmt -> executePrintStmt(printStmt);
+      case Stmt.While whileStmt -> executeWhileStmt(whileStmt);
       case Stmt.Expression exprStmt -> executeExprStmt(exprStmt);
       case Stmt.Var varStmt -> executeVarStmt(varStmt);
       case Stmt.Block blockStmt -> executeBlockStmt(blockStmt);
@@ -36,6 +37,12 @@ public final class Interpreter {
   private void executePrintStmt(Stmt.Print printStmt) {
     Object value = evaluate(printStmt.expr());
     System.out.println(stringify(value));
+  }
+
+  private void executeWhileStmt(Stmt.While whileStmt) {
+    while (isTruthy(evaluate(whileStmt.condition()))) {
+      execute(whileStmt.body());
+    }
   }
 
   private void executeExprStmt(Stmt.Expression exprStmt) {

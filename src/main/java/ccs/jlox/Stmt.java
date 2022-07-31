@@ -7,6 +7,8 @@ public sealed interface Stmt {
 
   record If(Expr condition, Stmt thenBranch, Stmt elseBranch) implements Stmt {}
 
+  record While(Expr condition, Stmt body) implements Stmt {}
+
   record Var(Token name, Expr initializer) implements Stmt {}
 
   record Print(Expr expr) implements Stmt {}
