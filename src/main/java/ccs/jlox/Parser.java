@@ -25,7 +25,6 @@ import static ccs.jlox.TokenType.NIL;
 import static ccs.jlox.TokenType.NUMBER;
 import static ccs.jlox.TokenType.OR;
 import static ccs.jlox.TokenType.PLUS;
-import static ccs.jlox.TokenType.PRINT;
 import static ccs.jlox.TokenType.RETURN;
 import static ccs.jlox.TokenType.RIGHT_BRACE;
 import static ccs.jlox.TokenType.RIGHT_PAREN;
@@ -110,7 +109,6 @@ public final class Parser {
   private Stmt statement() {
     if (match(FOR)) return forStatement();
     if (match(IF)) return ifStatement();
-    if (match(PRINT)) return printStatement();
     if (match(RETURN)) return returnStatement();
     if (match(WHILE)) return whileStatement();
     if (match(LEFT_BRACE)) return blockStatement();
@@ -166,12 +164,6 @@ public final class Parser {
       elseBranch = statement();
     }
     return new Stmt.If(condition, thenBranch, elseBranch);
-  }
-
-  private Stmt printStatement() {
-    Expr value = expression();
-    consume(SEMICOLON, "Expect ';' after value.");
-    return new Stmt.Print(value);
   }
 
   private Stmt returnStatement() {
@@ -392,8 +384,7 @@ public final class Parser {
     advance();
     while (!isAtEnd()) {
       if (previous().type() == SEMICOLON) return;
-      if (EnumSet.of(CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN).contains(peek().type()))
-        return;
+      if (EnumSet.of(CLASS, FUN, VAR, FOR, IF, WHILE, RETURN).contains(peek().type())) return;
       advance();
     }
   }

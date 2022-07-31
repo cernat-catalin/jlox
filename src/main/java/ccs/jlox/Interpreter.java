@@ -2,6 +2,7 @@ package ccs.jlox;
 
 import ccs.jlox.ffi.AssertFunction;
 import ccs.jlox.ffi.ClockFunction;
+import ccs.jlox.ffi.PrintFunction;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ public final class Interpreter {
   private Environment environment = globals;
 
   Interpreter() {
+    globals.define("print", new PrintFunction());
     globals.define("clock", new ClockFunction());
     globals.define("assert", new AssertFunction());
   }
@@ -27,7 +29,6 @@ public final class Interpreter {
   private void execute(Stmt stmt) {
     switch (stmt) {
       case Stmt.If ifStmt -> executeIfStmt(ifStmt);
-      case Stmt.Print printStmt -> executePrintStmt(printStmt);
       case Stmt.Return returnStmt -> executeReturnStmt(returnStmt);
       case Stmt.While whileStmt -> executeWhileStmt(whileStmt);
       case Stmt.Expression exprStmt -> executeExprStmt(exprStmt);
@@ -43,11 +44,6 @@ public final class Interpreter {
     } else if (ifStmt.elseBranch() != null) {
       execute(ifStmt.elseBranch());
     }
-  }
-
-  private void executePrintStmt(Stmt.Print printStmt) {
-    Object value = evaluate(printStmt.expr());
-    System.out.println(stringify(value));
   }
 
   private void executeReturnStmt(Stmt.Return returnStmt) {
@@ -237,18 +233,6 @@ public final class Interpreter {
   private static void checkNumberOperands(Token operator, Object left, Object right) {
     if (left instanceof Double && right instanceof Double) return;
     throw new RuntimeError(operator, "Operands must be numbers.");
-  }
-
-  private static String stringify(Object object) {
-    if (object == null) return "nil";
-    if (object instanceof Double) {
-      String text = object.toString();
-      if (text.endsWith(".0")) {
-        text = text.substring(0, text.length() - 2);
-      }
-      return text;
-    }
-    return object.toString();
   }
 
   public Environment getGlobals() {

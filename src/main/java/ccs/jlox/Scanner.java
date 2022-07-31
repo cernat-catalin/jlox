@@ -26,7 +26,6 @@ import static ccs.jlox.TokenType.NIL;
 import static ccs.jlox.TokenType.NUMBER;
 import static ccs.jlox.TokenType.OR;
 import static ccs.jlox.TokenType.PLUS;
-import static ccs.jlox.TokenType.PRINT;
 import static ccs.jlox.TokenType.RETURN;
 import static ccs.jlox.TokenType.RIGHT_BRACE;
 import static ccs.jlox.TokenType.RIGHT_PAREN;
@@ -58,7 +57,6 @@ public final class Scanner {
     KEYWORDS.put("if", IF);
     KEYWORDS.put("nil", NIL);
     KEYWORDS.put("or", OR);
-    KEYWORDS.put("print", PRINT);
     KEYWORDS.put("return", RETURN);
     KEYWORDS.put("super", SUPER);
     KEYWORDS.put("this", THIS);
