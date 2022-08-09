@@ -1,0 +1,19 @@
+print("Testing closures...");
+
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    return i;
+  }
+
+  return count;
+}
+
+var counter = makeCounter();
+for (var j = 1; j < 10; j = j + 1) {
+  assert(counter() == j, "Clojure wrong result!");
+}
+
+print("Finished testing closures.");
+print("");

@@ -4,11 +4,14 @@ import ccs.jlox.ffi.AssertFunction;
 import ccs.jlox.ffi.ClockFunction;
 import ccs.jlox.ffi.PrintFunction;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class Interpreter {
   private final Environment globals = new Environment();
   private Environment environment = globals;
+  private final Map<Integer, Integer> locals = new HashMap<>();
 
   Interpreter() {
     globals.define("print", new PrintFunction());
@@ -71,7 +74,7 @@ public final class Interpreter {
   }
 
   private void executeFunctionStmt(Stmt.Function functionStmt) {
-    LoxFunction function = new LoxFunction(functionStmt);
+    LoxFunction function = new LoxFunction(functionStmt, environment);
     environment.define(functionStmt.name().lexeme(), function);
   }
 
@@ -119,12 +122,28 @@ public final class Interpreter {
   }
 
   private Object evaluateVariable(Expr.Variable variable) {
-    return environment.get(variable.name());
+    return lookUpVariable(variable.name(), variable);
+  }
+
+  private Object lookUpVariable(Token name, Expr.Variable expr) {
+    int key = System.identityHashCode(expr);
+    Integer distance = locals.get(key);
+    if (distance != null) {
+      return environment.getAt(distance, name.lexeme());
+    } else {
+      return globals.get(name);
+    }
   }
 
   private Object evaluateAssignment(Expr.Assignment assignment) {
     Object value = evaluate(assignment.value());
-    environment.assign(assignment.name(), value);
+    int key = System.identityHashCode(assignment);
+    Integer distance = locals.get(key);
+    if (distance != null) {
+      environment.assignAt(distance, assignment.name(), value);
+    } else {
+      globals.assign(assignment.name(), value);
+    }
     return value;
   }
 
@@ -213,6 +232,12 @@ public final class Interpreter {
     return function.call(this, call.paren(), arguments);
   }
 
+  // XXX: Ugly hack. Fix this!
+  void resolve(Expr expr, int depth) {
+    int key = System.identityHashCode(expr);
+    locals.put(key, depth);
+  }
+
   private static boolean isEqual(Object a, Object b) {
     if (a == null && b == null) return true;
     if (a == null) return false;
@@ -233,9 +258,5 @@ public final class Interpreter {
   private static void checkNumberOperands(Token operator, Object left, Object right) {
     if (left instanceof Double && right instanceof Double) return;
     throw new RuntimeError(operator, "Operands must be numbers.");
-  }
-
-  public Environment getGlobals() {
-    return globals;
   }
 }

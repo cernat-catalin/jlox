@@ -1,5 +1,6 @@
 package ccs.jlox;
 
+// XXX: This class does not correctly print an AST. Fix it!
 public final class AstPrinter {
   public String print(Expr expr) {
     return switch (expr) {

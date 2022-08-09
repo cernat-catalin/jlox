@@ -9,6 +9,8 @@
   - Or maybe even better, do not allow declaration without initialization
 - Add support for `break` syntax (i.e. break from loop)
 - Add support for anonymous functions
+- Make resolver report if a local variable is never used
+- Make resolver more efficient. See challenge 4 in chapter 11 for more details
 
 ## Other
 - `Scanner` is kind of state based. Can we reduce that?
@@ -20,6 +22,9 @@
 - Make Lox statically typed
   - Check function arity at compile time
   - Should not be possible to _use_ variables/functions that are not declared
+- Add tests for
+  - `scopes` (error - re declaration in local scope). 
+  - error - no `return` in top level code
 
 ## Extra added features:
 - Make `print` a native function

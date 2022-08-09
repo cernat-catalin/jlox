@@ -1,0 +1,20 @@
+print("Testing scopes...");
+
+var a = "global";
+{
+  fun returnA() {
+    return a;
+  }
+
+  assert(returnA() == "global", "Clojure wrong result!");
+  var a = "block";
+  assert(returnA() == "global", "Clojure wrong result!");
+}
+
+{
+  var a = "local";
+  assert(a == "local", "Clojure wrong result!");
+}
+
+print("Finished testing scopes.");
+print("");

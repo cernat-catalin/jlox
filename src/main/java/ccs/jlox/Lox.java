@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 public class Lox {
   private static boolean hadError = false;
@@ -53,6 +52,11 @@ public class Lox {
     List<Stmt> stmts = parser.parse();
 
     if (hadError) return;
+
+    Resolver resolver = new Resolver(interpreter);
+    resolver.resolve(stmts);
+    if (hadError) return;
+
     interpreter.execute(stmts);
   }
 
