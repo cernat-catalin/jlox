@@ -8,6 +8,11 @@ public sealed interface Expr {
   // We keep the token paren here for error reporting
   record Call(Expr callee, Token paren, List<Expr> arguments) implements Expr {}
 
+  // Property access
+  record Get(Expr object, Token name) implements Expr {}
+
+  record Set(Expr object, Token name, Expr value) implements Expr {}
+
   record Grouping(Expr expr) implements Expr {}
 
   record Literal(Object value) implements Expr {}

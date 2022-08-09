@@ -5,6 +5,7 @@ import static ccs.jlox.TokenType.BANG;
 import static ccs.jlox.TokenType.BANG_EQUAL;
 import static ccs.jlox.TokenType.CLASS;
 import static ccs.jlox.TokenType.COMMA;
+import static ccs.jlox.TokenType.DOT;
 import static ccs.jlox.TokenType.ELSE;
 import static ccs.jlox.TokenType.EOF;
 import static ccs.jlox.TokenType.EQUAL;
@@ -61,6 +62,7 @@ public final class Parser {
 
   private Stmt declaration() {
     try {
+      if (match(CLASS)) return classDeclaration();
       if (match(VAR)) return varDeclaration();
       if (match(FUN)) return funDeclaration("function");
       return statement();
@@ -68,6 +70,17 @@ public final class Parser {
       synchronize();
       return null;
     }
+  }
+
+  private Stmt classDeclaration() {
+    Token name = consume(IDENTIFIER, "Expect class name.");
+    consume(LEFT_BRACE, "Expect '{' before class body.");
+    List<Stmt.Function> methods = new ArrayList<>();
+    while (!check(RIGHT_BRACE) && !isAtEnd()) {
+      methods.add(funDeclaration("method"));
+    }
+    consume(RIGHT_BRACE, "Expect '}' after class body.");
+    return new Stmt.Class(name, methods);
   }
 
   private Stmt varDeclaration() {
@@ -212,6 +225,8 @@ public final class Parser {
       if (expr instanceof Expr.Variable variable) {
         Token name = variable.name();
         return new Expr.Assignment(name, value);
+      } else if (expr instanceof Expr.Get get) {
+        return new Expr.Set(get.object(), get.name(), value);
       }
       error(equals, "Invalid assignment target.");
     }
@@ -293,6 +308,9 @@ public final class Parser {
     while (true) {
       if (match(LEFT_PAREN)) {
         expr = finishCall(expr);
+      } else if (match(DOT)) {
+        Token name = consume(IDENTIFIER, "Expect property name after '.'.");
+        expr = new Expr.Get(expr, name);
       } else {
         break;
       }

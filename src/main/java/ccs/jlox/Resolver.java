@@ -22,17 +22,18 @@ public class Resolver {
       case Stmt.Expression exprStmt -> resolveExpressionStmt(exprStmt);
       case Stmt.Var varStmt -> resolveVar(varStmt);
       case Stmt.Function functionStmt -> resolveFunctionStmt(functionStmt);
+      case Stmt.Class classStmt -> resolveClassStmt(classStmt);
       case Stmt.Block blockStmt -> resolveBlock(blockStmt);
     }
   }
 
-  public void resolveIfStmt(Stmt.If stmt) {
+  private void resolveIfStmt(Stmt.If stmt) {
     resolve(stmt.condition());
     resolve(stmt.thenBranch());
     if (stmt.elseBranch() != null) resolve(stmt.elseBranch());
   }
 
-  public void resolveReturnStmt(Stmt.Return stmt) {
+  private void resolveReturnStmt(Stmt.Return stmt) {
     if (currentFunction == FunctionType.NONE) {
       Lox.error(stmt.keyword(), "Can't return from top-level code.");
     }
@@ -42,12 +43,12 @@ public class Resolver {
     }
   }
 
-  public void resolveWhileStmt(Stmt.While stmt) {
+  private void resolveWhileStmt(Stmt.While stmt) {
     resolve(stmt.condition());
     resolve(stmt.body());
   }
 
-  public void resolveExpressionStmt(Stmt.Expression stmt) {
+  private void resolveExpressionStmt(Stmt.Expression stmt) {
     resolve(stmt.expr());
   }
 
@@ -59,7 +60,12 @@ public class Resolver {
     define(varStmt.name());
   }
 
-  public void resolveFunctionStmt(Stmt.Function stmt) {
+  private void resolveClassStmt(Stmt.Class stmt) {
+    declare(stmt.name());
+    define(stmt.name());
+  }
+
+  private void resolveFunctionStmt(Stmt.Function stmt) {
     declare(stmt.name());
     define(stmt.name());
     resolveFunction(stmt, FunctionType.FUNCTION);
@@ -102,31 +108,33 @@ public class Resolver {
       case Expr.Binary binary -> resolveBinaryExpr(binary);
       case Expr.Grouping group -> resolveGroupingExpr(group);
       case Expr.Call call -> resolveCallExpr(call);
+      case Expr.Get get -> resolveGetExpr(get);
+      case Expr.Set set -> resolveSetExpr(set);
     }
   }
 
-  public void resolveLiteralExpr(Expr.Literal expr) {
+  private void resolveLiteralExpr(Expr.Literal expr) {
     // NO-OP
   }
 
-  public void resolveLogicalExpr(Expr.Logical expr) {
+  private void resolveLogicalExpr(Expr.Logical expr) {
     resolve(expr.left());
     resolve(expr.right());
   }
 
-  public void resolveVarExpr(Expr.Variable expr) {
+  private void resolveVarExpr(Expr.Variable expr) {
     if (!scopes.isEmpty() && scopes.peek().get(expr.name().lexeme()) == Boolean.FALSE) {
       Lox.error(expr.name(), "Can't read local variable in its own initializer.");
     }
     resolveLocal(expr, expr.name());
   }
 
-  public void resolveAssignExpr(Expr.Assignment expr) {
+  private void resolveAssignExpr(Expr.Assignment expr) {
     resolve(expr.value());
     resolveLocal(expr, expr.name());
   }
 
-  public void resolveUnaryExpr(Expr.Unary expr) {
+  private void resolveUnaryExpr(Expr.Unary expr) {
     resolve(expr.right());
   }
 
@@ -139,20 +147,29 @@ public class Resolver {
     }
   }
 
-  public void resolveBinaryExpr(Expr.Binary expr) {
+  private void resolveBinaryExpr(Expr.Binary expr) {
     resolve(expr.left());
     resolve(expr.right());
   }
 
-  public void resolveGroupingExpr(Expr.Grouping expr) {
+  private void resolveGroupingExpr(Expr.Grouping expr) {
     resolve(expr.expr());
   }
 
-  public void resolveCallExpr(Expr.Call expr) {
+  private void resolveCallExpr(Expr.Call expr) {
     resolve(expr.callee());
     for (Expr argument : expr.arguments()) {
       resolve(argument);
     }
+  }
+
+  private void resolveGetExpr(Expr.Get expr) {
+    resolve(expr.object());
+  }
+
+  private void resolveSetExpr(Expr.Set expr) {
+    resolve(expr.value());
+    resolve(expr.object());
   }
 
   private void beginScope() {

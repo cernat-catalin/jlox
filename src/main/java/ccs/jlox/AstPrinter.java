@@ -10,6 +10,8 @@ public final class AstPrinter {
       case Expr.Binary binary -> parenthesize(
           binary.operator().lexeme(), binary.left(), binary.right());
       case Expr.Call call -> print(call.callee());
+      case Expr.Get get -> print(get.object());
+      case Expr.Set set -> print(set.object());
       case Expr.Grouping grouping -> parenthesize("group", grouping.expr());
       case Expr.Variable variable -> parenthesize("var", variable);
       case Expr.Assignment assignment -> parenthesize("assign", assignment);

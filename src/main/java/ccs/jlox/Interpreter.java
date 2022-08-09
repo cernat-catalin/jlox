@@ -37,6 +37,7 @@ public final class Interpreter {
       case Stmt.Expression exprStmt -> executeExprStmt(exprStmt);
       case Stmt.Var varStmt -> executeVarStmt(varStmt);
       case Stmt.Function functionStmt -> executeFunctionStmt(functionStmt);
+      case Stmt.Class classStmt -> executeClassStmt(classStmt);
       case Stmt.Block blockStmt -> executeBlockStmt(blockStmt);
     }
   }
@@ -78,6 +79,13 @@ public final class Interpreter {
     environment.define(functionStmt.name().lexeme(), function);
   }
 
+  private void executeClassStmt(Stmt.Class classStmt) {
+    // XXX: Why two step process?
+    environment.define(classStmt.name().lexeme(), null);
+    LoxClass klass = new LoxClass(classStmt.name().lexeme());
+    environment.assign(classStmt.name(), klass);
+  }
+
   private void executeBlockStmt(Stmt.Block blockStmt) {
     executeBlock(blockStmt.statements(), new Environment(environment));
   }
@@ -104,6 +112,8 @@ public final class Interpreter {
       case Expr.Binary binary -> evaluateBinary(binary);
       case Expr.Grouping group -> evaluateGrouping(group);
       case Expr.Call call -> evaluateCall(call);
+      case Expr.Get get -> evaluateGet(get);
+      case Expr.Set set -> evaluateSet(set);
     };
   }
 
@@ -230,6 +240,25 @@ public final class Interpreter {
     }
 
     return function.call(this, call.paren(), arguments);
+  }
+
+  private Object evaluateGet(Expr.Get get) {
+    Object object = evaluate(get.object());
+    if (object instanceof LoxInstance loxInstance) {
+      return loxInstance.get(get.name());
+    }
+    throw new RuntimeError(get.name(),
+        "Only instances have properties.");
+  }
+
+  private Object evaluateSet(Expr.Set set) {
+    Object object = evaluate(set.object());
+    if (!(object instanceof LoxInstance loxInstance)) {
+      throw new RuntimeError(set.name(), "Only instances have fields.");
+    }
+    Object value = evaluate(set.value());
+    loxInstance.set(set.name(), value);
+    return value;
   }
 
   // XXX: Ugly hack. Fix this!
