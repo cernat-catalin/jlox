@@ -121,6 +121,7 @@ public final class Interpreter {
       case Expr.Call call -> evaluateCall(call);
       case Expr.Get get -> evaluateGet(get);
       case Expr.Set set -> evaluateSet(set);
+      case Expr.This thisExpr-> evaluateThis(thisExpr);
     };
   }
 
@@ -142,7 +143,7 @@ public final class Interpreter {
     return lookUpVariable(variable.name(), variable);
   }
 
-  private Object lookUpVariable(Token name, Expr.Variable expr) {
+  private Object lookUpVariable(Token name, Expr expr) {
     int key = System.identityHashCode(expr);
     Integer distance = locals.get(key);
     if (distance != null) {
@@ -266,6 +267,10 @@ public final class Interpreter {
     Object value = evaluate(set.value());
     loxInstance.set(set.name(), value);
     return value;
+  }
+
+  private Object evaluateThis(Expr.This thisExpr) {
+    return lookUpVariable(thisExpr.keyword(), thisExpr);
   }
 
   // XXX: Ugly hack. Fix this!

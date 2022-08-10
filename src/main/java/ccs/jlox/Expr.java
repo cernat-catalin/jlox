@@ -13,6 +13,8 @@ public sealed interface Expr {
 
   record Set(Expr object, Token name, Expr value) implements Expr {}
 
+  record This(Token keyword) implements Expr {}
+
   record Grouping(Expr expr) implements Expr {}
 
   record Literal(Object value) implements Expr {}

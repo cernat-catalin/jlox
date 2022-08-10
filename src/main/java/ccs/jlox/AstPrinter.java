@@ -12,6 +12,7 @@ public final class AstPrinter {
       case Expr.Call call -> print(call.callee());
       case Expr.Get get -> print(get.object());
       case Expr.Set set -> print(set.object());
+      case Expr.This thisExpr -> thisExpr.keyword().toString();
       case Expr.Grouping grouping -> parenthesize("group", grouping.expr());
       case Expr.Variable variable -> parenthesize("var", variable);
       case Expr.Assignment assignment -> parenthesize("assign", assignment);

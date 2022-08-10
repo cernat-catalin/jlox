@@ -9,6 +9,7 @@ public class Resolver {
   private final Interpreter interpreter;
   private final Stack<Map<String, Boolean>> scopes = new Stack<>();
   private FunctionType currentFunction = FunctionType.NONE;
+  private ClassType currentClass = ClassType.NONE;
 
   public Resolver(Interpreter interpreter) {
     this.interpreter = interpreter;
@@ -61,12 +62,21 @@ public class Resolver {
   }
 
   private void resolveClassStmt(Stmt.Class stmt) {
+    ClassType enclosingClass = currentClass;
+    currentClass = ClassType.CLASS;
     declare(stmt.name());
+
+    beginScope();
+    scopes.peek().put("this", true);
+
     for (Stmt.Function method : stmt.methods()) {
       FunctionType declaration = FunctionType.METHOD;
       resolveFunction(method, declaration);
     }
     define(stmt.name());
+
+    endScope();
+    currentClass = enclosingClass;
   }
 
   private void resolveFunctionStmt(Stmt.Function stmt) {
@@ -114,6 +124,7 @@ public class Resolver {
       case Expr.Call call -> resolveCallExpr(call);
       case Expr.Get get -> resolveGetExpr(get);
       case Expr.Set set -> resolveSetExpr(set);
+      case Expr.This thisExpr -> resolveThisExpr(thisExpr);
     }
   }
 
@@ -174,6 +185,14 @@ public class Resolver {
   private void resolveSetExpr(Expr.Set expr) {
     resolve(expr.value());
     resolve(expr.object());
+  }
+
+  private void resolveThisExpr(Expr.This thisExpr) {
+    if (currentClass == ClassType.NONE) {
+      Lox.error(thisExpr.keyword(), "Can't use 'this' outside of a class.");
+    }
+
+    resolveLocal(thisExpr, thisExpr.keyword());
   }
 
   private void beginScope() {

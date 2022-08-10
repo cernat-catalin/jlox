@@ -33,6 +33,7 @@ import static ccs.jlox.TokenType.SEMICOLON;
 import static ccs.jlox.TokenType.SLASH;
 import static ccs.jlox.TokenType.STAR;
 import static ccs.jlox.TokenType.STRING;
+import static ccs.jlox.TokenType.THIS;
 import static ccs.jlox.TokenType.TRUE;
 import static ccs.jlox.TokenType.VAR;
 import static ccs.jlox.TokenType.WHILE;
@@ -339,6 +340,7 @@ public final class Parser {
     if (match(NUMBER, STRING)) {
       return new Expr.Literal(previous().literal());
     }
+    if (match(THIS)) return new Expr.This(previous());
     if (match(IDENTIFIER)) {
       return new Expr.Variable(previous());
     }
