@@ -80,9 +80,16 @@ public final class Interpreter {
   }
 
   private void executeClassStmt(Stmt.Class classStmt) {
-    // XXX: Why two step process?
+    // XXX: Why two step process (first define class then assign it)?
     environment.define(classStmt.name().lexeme(), null);
-    LoxClass klass = new LoxClass(classStmt.name().lexeme());
+
+    Map<String, LoxFunction> methods = new HashMap<>();
+    for (Stmt.Function method : classStmt.methods()) {
+      LoxFunction function = new LoxFunction(method, environment);
+      methods.put(method.name().lexeme(), function);
+    }
+
+    LoxClass klass = new LoxClass(classStmt.name().lexeme(), methods);
     environment.assign(classStmt.name(), klass);
   }
 

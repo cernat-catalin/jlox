@@ -62,6 +62,10 @@ public class Resolver {
 
   private void resolveClassStmt(Stmt.Class stmt) {
     declare(stmt.name());
+    for (Stmt.Function method : stmt.methods()) {
+      FunctionType declaration = FunctionType.METHOD;
+      resolveFunction(method, declaration);
+    }
     define(stmt.name());
   }
 
