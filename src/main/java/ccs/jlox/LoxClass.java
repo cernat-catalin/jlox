@@ -15,6 +15,10 @@ public class LoxClass implements LoxCallable {
   @Override
   public Object call(Interpreter interpreter, Token callSite, List<Object> arguments) {
     LoxInstance instance = new LoxInstance(this);
+    LoxFunction initializer = findMethod("init");
+    if (initializer != null) {
+      initializer.bind(instance).call(interpreter, callSite, arguments);
+    }
     return instance;
   }
 
@@ -27,7 +31,9 @@ public class LoxClass implements LoxCallable {
 
   @Override
   public int arity() {
-    return 0;
+    LoxFunction initializer = findMethod("init");
+    if (initializer == null) return 0;
+    return initializer.arity();
   }
 
   @Override

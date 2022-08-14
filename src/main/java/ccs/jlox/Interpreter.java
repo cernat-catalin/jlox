@@ -10,8 +10,8 @@ import java.util.Map;
 
 public final class Interpreter {
   private final Environment globals = new Environment();
-  private Environment environment = globals;
   private final Map<Integer, Integer> locals = new HashMap<>();
+  private Environment environment = globals;
 
   Interpreter() {
     globals.define("print", new PrintFunction());
@@ -75,7 +75,7 @@ public final class Interpreter {
   }
 
   private void executeFunctionStmt(Stmt.Function functionStmt) {
-    LoxFunction function = new LoxFunction(functionStmt, environment);
+    LoxFunction function = new LoxFunction(functionStmt, environment, false);
     environment.define(functionStmt.name().lexeme(), function);
   }
 
@@ -85,7 +85,8 @@ public final class Interpreter {
 
     Map<String, LoxFunction> methods = new HashMap<>();
     for (Stmt.Function method : classStmt.methods()) {
-      LoxFunction function = new LoxFunction(method, environment);
+      LoxFunction function =
+          new LoxFunction(method, environment, method.name().lexeme().equals("init"));
       methods.put(method.name().lexeme(), function);
     }
 
@@ -121,7 +122,7 @@ public final class Interpreter {
       case Expr.Call call -> evaluateCall(call);
       case Expr.Get get -> evaluateGet(get);
       case Expr.Set set -> evaluateSet(set);
-      case Expr.This thisExpr-> evaluateThis(thisExpr);
+      case Expr.This thisExpr -> evaluateThis(thisExpr);
     };
   }
 
@@ -255,8 +256,7 @@ public final class Interpreter {
     if (object instanceof LoxInstance loxInstance) {
       return loxInstance.get(get.name());
     }
-    throw new RuntimeError(get.name(),
-        "Only instances have properties.");
+    throw new RuntimeError(get.name(), "Only instances have properties.");
   }
 
   private Object evaluateSet(Expr.Set set) {
