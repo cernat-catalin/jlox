@@ -1,5 +1,3 @@
-print("Testing control flow...");
-
 var a = 1;
 if (1 < 2) {
   a = 2;
@@ -11,7 +9,4 @@ if (2 < 1) {
 } else {
   a = 3;
 }
-assert(a == 3, "Control flow wrong result!");
-
-print("Finished testing control flow.");
-print("");
+assert(a == 4, "Control flow wrong result!");

@@ -1,4 +1,4 @@
-package ccs.jlox;
+package ccs.jlox.ast;
 
 import java.util.List;
 

@@ -28,6 +28,8 @@
 - Add tests for
   - `scopes` (error - re declaration in local scope). 
   - error - no `return` in top level code
+  - classes + inheritance (invalid uses of inheritance + super)
+- try catch
 
 ## Extra added features:
 - Make `print` a native function

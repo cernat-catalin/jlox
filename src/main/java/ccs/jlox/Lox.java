@@ -1,17 +1,22 @@
 package ccs.jlox;
 
+import ccs.jlox.ast.Stmt;
+import ccs.jlox.ast.Token;
+import ccs.jlox.backend.Interpreter;
+import ccs.jlox.error.ErrorHandler;
+import ccs.jlox.frontend.Parser;
+import ccs.jlox.frontend.Scanner;
+import ccs.jlox.interm.Resolver;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
 public class Lox {
-  private static boolean hadError = false;
-  private static boolean hadRuntimeError = false;
-  private static final Interpreter interpreter = new Interpreter();
-  private static String currentFile = "";
+  private static final ErrorHandler ERROR_HANDLER = new ErrorHandler();
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
@@ -25,10 +30,11 @@ public class Lox {
   }
 
   static void runFile(String path) throws IOException {
-    currentFile = path;
-    run(Files.readString(Paths.get(path)));
-    if (hadError) System.exit(65);
-    if (hadRuntimeError) System.exit(70);
+    Path filePath = Paths.get(path);
+    runSource(Files.readString(filePath));
+    printFileErrors(filePath.getFileName().toString());
+    if (ERROR_HANDLER.hadCompileError()) System.exit(65);
+    if (ERROR_HANDLER.hadRuntimeError()) System.exit(70);
   }
 
   static void runPrompt() throws IOException {
@@ -39,50 +45,49 @@ public class Lox {
       System.out.print("> ");
       String line = reader.readLine();
       if (line == null) break;
-      run(line);
-      hadError = false;
+      runSource(line);
+      printPromptErrors();
+      ERROR_HANDLER.reset();
     }
   }
 
-  private static void run(String source) {
+  static void runSource(String source) {
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
 
+    Interpreter interpreter = new Interpreter();
     Parser parser = new Parser(tokens);
     List<Stmt> stmts = parser.parse();
 
-    if (hadError) return;
+    if (ERROR_HANDLER.hadCompileError()) return;
 
     Resolver resolver = new Resolver(interpreter);
     resolver.resolve(stmts);
-    if (hadError) return;
+    if (ERROR_HANDLER.hadCompileError()) return;
 
     interpreter.execute(stmts);
   }
 
-  static void runtimeError(RuntimeError error) {
-    error(error.getToken().line(), error.getMessage());
-    hadRuntimeError = true;
+  public static ErrorHandler getErrorHandler() {
+    return ERROR_HANDLER;
   }
 
-  static void error(Token token, String message) {
-    if (token.type() == TokenType.EOF) {
-      report(token.line(), " at end", message);
-    } else {
-      report(token.line(), " at '" + token.lexeme() + "'", message);
-    }
+  // XXX: Kinda ugly. Try and find something else.
+  private static void printPromptErrors() {
+    ERROR_HANDLER
+        .getCompileErrors()
+        .forEach(error -> System.out.println((ErrorHandler.errorRepresentation(error))));
+    ERROR_HANDLER
+        .getRuntimeErrors()
+        .forEach(error -> System.out.println((ErrorHandler.errorRepresentation(error))));
   }
 
-  static void error(int line, String message) {
-    report(line, "", message);
-  }
-
-  private static void report(int line, String where, String message) {
-    if (!currentFile.equals("")) {
-      System.err.printf("[file %s] [line %d] Error%s: %s%n", currentFile, line, where, message);
-    } else {
-      System.err.printf("[line %d] Error%s: %s%n", line, where, message);
-    }
-    hadError = true;
+  private static void printFileErrors(String filename) {
+    ERROR_HANDLER
+        .getCompileErrors()
+        .forEach(error -> System.out.println((ErrorHandler.errorRepresentation(error, filename))));
+    ERROR_HANDLER
+        .getRuntimeErrors()
+        .forEach(error -> System.out.println((ErrorHandler.errorRepresentation(error, filename))));
   }
 }

@@ -1,4 +1,4 @@
-package ccs.jlox;
+package ccs.jlox.ast;
 
 public enum TokenType {
   // single character tokens

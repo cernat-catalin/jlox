@@ -1,9 +1,9 @@
-package ccs.jlox.ffi;
+package ccs.jlox.backend.ffi;
 
-import ccs.jlox.Interpreter;
-import ccs.jlox.LoxCallable;
-import ccs.jlox.RuntimeError;
-import ccs.jlox.Token;
+import ccs.jlox.error.RuntimeError;
+import ccs.jlox.ast.Token;
+import ccs.jlox.backend.Interpreter;
+import ccs.jlox.backend.LoxCallable;
 import java.util.List;
 
 public class AssertFunction implements LoxCallable {

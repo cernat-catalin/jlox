@@ -1,5 +1,7 @@
-package ccs.jlox;
+package ccs.jlox.backend;
 
+import ccs.jlox.ast.Stmt;
+import ccs.jlox.ast.Token;
 import java.util.List;
 
 public class LoxFunction implements LoxCallable {
@@ -7,7 +9,7 @@ public class LoxFunction implements LoxCallable {
   private final Environment closure;
   private final boolean isInitializer;
 
-  LoxFunction(Stmt.Function declaration, Environment closure, boolean isInitializer) {
+  public LoxFunction(Stmt.Function declaration, Environment closure, boolean isInitializer) {
     this.declaration = declaration;
     this.closure = closure;
     this.isInitializer = isInitializer;

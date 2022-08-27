@@ -1,11 +1,19 @@
-package ccs.jlox;
+package ccs.jlox.interm;
 
+import ccs.jlox.error.ErrorHandler;
+import ccs.jlox.Lox;
+import ccs.jlox.ast.Expr;
+import ccs.jlox.ast.Stmt;
+import ccs.jlox.ast.Token;
+import ccs.jlox.backend.Interpreter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
 public class Resolver {
+  private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
+
   private final Interpreter interpreter;
   private final Stack<Map<String, Boolean>> scopes = new Stack<>();
   private FunctionType currentFunction = FunctionType.NONE;
@@ -36,12 +44,12 @@ public class Resolver {
 
   private void resolveReturnStmt(Stmt.Return stmt) {
     if (currentFunction == FunctionType.NONE) {
-      Lox.error(stmt.keyword(), "Can't return from top-level code.");
+      ERROR_HANDLER.error(stmt.keyword(), "Can't return from top-level code.");
     }
 
     if (stmt.value() != null) {
       if (currentFunction == FunctionType.INITIALIZER) {
-        Lox.error(stmt.keyword(), "Can't return a value from an initializer.");
+        ERROR_HANDLER.error(stmt.keyword(), "Can't return a value from an initializer.");
       }
       resolve(stmt.value());
     }
@@ -70,10 +78,9 @@ public class Resolver {
     declare(stmt.name());
     define(stmt.name());
 
-    if (stmt.superclass() != null &&
-        stmt.name().lexeme().equals(stmt.superclass().name().lexeme())) {
-      Lox.error(stmt.superclass().name(),
-          "A class can't inherit from itself.");
+    if (stmt.superclass() != null
+        && stmt.name().lexeme().equals(stmt.superclass().name().lexeme())) {
+      ERROR_HANDLER.error(stmt.superclass().name(), "A class can't inherit from itself.");
     }
 
     if (stmt.superclass() != null) {
@@ -133,7 +140,7 @@ public class Resolver {
     endScope();
   }
 
-  void resolve(List<Stmt> statements) {
+  public void resolve(List<Stmt> statements) {
     for (Stmt statement : statements) {
       resolve(statement);
     }
@@ -167,7 +174,7 @@ public class Resolver {
 
   private void resolveVarExpr(Expr.Variable expr) {
     if (!scopes.isEmpty() && scopes.peek().get(expr.name().lexeme()) == Boolean.FALSE) {
-      Lox.error(expr.name(), "Can't read local variable in its own initializer.");
+      ERROR_HANDLER.error(expr.name(), "Can't read local variable in its own initializer.");
     }
     resolveLocal(expr, expr.name());
   }
@@ -217,7 +224,7 @@ public class Resolver {
 
   private void resolveThisExpr(Expr.This thisExpr) {
     if (currentClass == ClassType.NONE) {
-      Lox.error(thisExpr.keyword(), "Can't use 'this' outside of a class.");
+      ERROR_HANDLER.error(thisExpr.keyword(), "Can't use 'this' outside of a class.");
     }
 
     resolveLocal(thisExpr, thisExpr.keyword());
@@ -225,9 +232,9 @@ public class Resolver {
 
   private void resolveSuperExpr(Expr.Super superExpr) {
     if (currentClass == ClassType.NONE) {
-      Lox.error(superExpr.keyword(), "Can't use 'super' outside of a class.");
+      ERROR_HANDLER.error(superExpr.keyword(), "Can't use 'super' outside of a class.");
     } else if (currentClass != ClassType.SUBCLASS) {
-      Lox.error(superExpr.keyword(), "Can't use 'super' in a class with no superclass.");
+      ERROR_HANDLER.error(superExpr.keyword(), "Can't use 'super' in a class with no superclass.");
     }
 
     resolveLocal(superExpr, superExpr.keyword());
@@ -246,7 +253,7 @@ public class Resolver {
     Map<String, Boolean> scope = scopes.peek();
 
     if (scope.containsKey(name.lexeme())) {
-      Lox.error(name, "Already variable with this name in this scope.");
+      ERROR_HANDLER.error(name, "Already variable with this name in this scope.");
     }
 
     scope.put(name.lexeme(), false);

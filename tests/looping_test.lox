@@ -1,5 +1,3 @@
-print("Testing looping...");
-
 var a = 0;
 var i = 1;
 while (i <= 10) {
@@ -26,7 +24,3 @@ for (; j <= 10;) {
   j = j + 1;
 }
 assert(b == 165, "Looping flow wrong result!");
-
-
-print("Finished testing looping.");
-print("");

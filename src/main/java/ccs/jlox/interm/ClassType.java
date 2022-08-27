@@ -1,4 +1,4 @@
-package ccs.jlox;
+package ccs.jlox.interm;
 
 public enum ClassType {
   NONE,

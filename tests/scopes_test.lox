@@ -1,5 +1,3 @@
-print("Testing scopes...");
-
 var a = "global";
 {
   fun returnA() {
@@ -15,6 +13,3 @@ var a = "global";
   var a = "local";
   assert(a == "local", "Clojure wrong result!");
 }
-
-print("Finished testing scopes.");
-print("");

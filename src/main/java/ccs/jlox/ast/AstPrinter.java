@@ -1,4 +1,4 @@
-package ccs.jlox;
+package ccs.jlox.ast;
 
 // XXX: This class does not correctly print an AST. Fix it!
 public final class AstPrinter {

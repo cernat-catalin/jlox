@@ -1,19 +1,28 @@
-package ccs.jlox;
+package ccs.jlox.backend;
 
-import ccs.jlox.ffi.AssertFunction;
-import ccs.jlox.ffi.ClockFunction;
-import ccs.jlox.ffi.PrintFunction;
+import ccs.jlox.error.ErrorHandler;
+import ccs.jlox.Lox;
+import ccs.jlox.error.RuntimeError;
+import ccs.jlox.ast.Expr;
+import ccs.jlox.ast.Stmt;
+import ccs.jlox.ast.Token;
+import ccs.jlox.ast.TokenType;
+import ccs.jlox.backend.ffi.AssertFunction;
+import ccs.jlox.backend.ffi.ClockFunction;
+import ccs.jlox.backend.ffi.PrintFunction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class Interpreter {
+  private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
+
   private final Environment globals = new Environment();
   private final Map<Integer, Integer> locals = new HashMap<>();
   private Environment environment = globals;
 
-  Interpreter() {
+  public Interpreter() {
     globals.define("print", new PrintFunction());
     globals.define("clock", new ClockFunction());
     globals.define("assert", new AssertFunction());
@@ -25,7 +34,7 @@ public final class Interpreter {
         execute(stmt);
       }
     } catch (RuntimeError error) {
-      Lox.runtimeError(error);
+      ERROR_HANDLER.runtimeError(error);
     }
   }
 
@@ -84,8 +93,7 @@ public final class Interpreter {
     if (classStmt.superclass() != null) {
       superclass = evaluate(classStmt.superclass());
       if (!(superclass instanceof LoxClass)) {
-        throw new RuntimeError(classStmt.superclass().name(),
-            "Superclass must be a class.");
+        throw new RuntimeError(classStmt.superclass().name(), "Superclass must be a class.");
       }
     }
     // XXX: Why two step process (first define class then assign it)?
@@ -103,7 +111,7 @@ public final class Interpreter {
       methods.put(method.name().lexeme(), function);
     }
 
-    LoxClass klass = new LoxClass(classStmt.name().lexeme(), (LoxClass)superclass, methods);
+    LoxClass klass = new LoxClass(classStmt.name().lexeme(), (LoxClass) superclass, methods);
 
     if (superclass != null) {
       environment = environment.ancestor(1);
@@ -116,7 +124,7 @@ public final class Interpreter {
     executeBlock(blockStmt.statements(), new Environment(environment));
   }
 
-  void executeBlock(List<Stmt> statements, Environment environment) {
+  public void executeBlock(List<Stmt> statements, Environment environment) {
     Environment previous = this.environment;
     try {
       this.environment = environment;
@@ -300,14 +308,15 @@ public final class Interpreter {
     LoxFunction method = superClass.findMethod(superExpr.method().lexeme());
 
     if (method == null) {
-      throw new RuntimeError(superExpr.method(), "Undefined property '" + superExpr.method().lexeme() + "'.");
+      throw new RuntimeError(
+          superExpr.method(), "Undefined property '" + superExpr.method().lexeme() + "'.");
     }
 
     return method.bind(object);
   }
 
   // XXX: Ugly hack. Fix this!
-  void resolve(Expr expr, int depth) {
+  public void resolve(Expr expr, int depth) {
     int key = System.identityHashCode(expr);
     locals.put(key, depth);
   }

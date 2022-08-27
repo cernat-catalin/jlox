@@ -1,5 +1,6 @@
-package ccs.jlox;
+package ccs.jlox.backend;
 
+import ccs.jlox.ast.Token;
 import java.util.List;
 
 public interface LoxCallable {

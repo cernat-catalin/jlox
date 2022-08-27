@@ -1,5 +1,7 @@
-package ccs.jlox;
+package ccs.jlox.backend;
 
+import ccs.jlox.error.RuntimeError;
+import ccs.jlox.ast.Token;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +24,7 @@ public class LoxInstance {
     throw new RuntimeError(name, "Undefined property '" + name.lexeme() + "'.");
   }
 
-  void set(Token name, Object value) {
+  public void set(Token name, Object value) {
     fields.put(name.lexeme(), value);
   }
 

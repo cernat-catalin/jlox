@@ -1,50 +1,58 @@
-package ccs.jlox;
+package ccs.jlox.frontend;
 
-import static ccs.jlox.TokenType.AND;
-import static ccs.jlox.TokenType.BANG;
-import static ccs.jlox.TokenType.BANG_EQUAL;
-import static ccs.jlox.TokenType.CLASS;
-import static ccs.jlox.TokenType.COMMA;
-import static ccs.jlox.TokenType.DOT;
-import static ccs.jlox.TokenType.ELSE;
-import static ccs.jlox.TokenType.EOF;
-import static ccs.jlox.TokenType.EQUAL;
-import static ccs.jlox.TokenType.EQUAL_EQUAL;
-import static ccs.jlox.TokenType.FALSE;
-import static ccs.jlox.TokenType.FOR;
-import static ccs.jlox.TokenType.FUN;
-import static ccs.jlox.TokenType.GREATER;
-import static ccs.jlox.TokenType.GREATER_EQUAL;
-import static ccs.jlox.TokenType.IDENTIFIER;
-import static ccs.jlox.TokenType.IF;
-import static ccs.jlox.TokenType.LEFT_BRACE;
-import static ccs.jlox.TokenType.LEFT_PAREN;
-import static ccs.jlox.TokenType.LESS;
-import static ccs.jlox.TokenType.LESS_EQUAL;
-import static ccs.jlox.TokenType.MINUS;
-import static ccs.jlox.TokenType.NIL;
-import static ccs.jlox.TokenType.NUMBER;
-import static ccs.jlox.TokenType.OR;
-import static ccs.jlox.TokenType.PLUS;
-import static ccs.jlox.TokenType.RETURN;
-import static ccs.jlox.TokenType.RIGHT_BRACE;
-import static ccs.jlox.TokenType.RIGHT_PAREN;
-import static ccs.jlox.TokenType.SEMICOLON;
-import static ccs.jlox.TokenType.SLASH;
-import static ccs.jlox.TokenType.STAR;
-import static ccs.jlox.TokenType.STRING;
-import static ccs.jlox.TokenType.SUPER;
-import static ccs.jlox.TokenType.THIS;
-import static ccs.jlox.TokenType.TRUE;
-import static ccs.jlox.TokenType.VAR;
-import static ccs.jlox.TokenType.WHILE;
+import static ccs.jlox.ast.TokenType.AND;
+import static ccs.jlox.ast.TokenType.BANG;
+import static ccs.jlox.ast.TokenType.BANG_EQUAL;
+import static ccs.jlox.ast.TokenType.CLASS;
+import static ccs.jlox.ast.TokenType.COMMA;
+import static ccs.jlox.ast.TokenType.DOT;
+import static ccs.jlox.ast.TokenType.ELSE;
+import static ccs.jlox.ast.TokenType.EOF;
+import static ccs.jlox.ast.TokenType.EQUAL;
+import static ccs.jlox.ast.TokenType.EQUAL_EQUAL;
+import static ccs.jlox.ast.TokenType.FALSE;
+import static ccs.jlox.ast.TokenType.FOR;
+import static ccs.jlox.ast.TokenType.FUN;
+import static ccs.jlox.ast.TokenType.GREATER;
+import static ccs.jlox.ast.TokenType.GREATER_EQUAL;
+import static ccs.jlox.ast.TokenType.IDENTIFIER;
+import static ccs.jlox.ast.TokenType.IF;
+import static ccs.jlox.ast.TokenType.LEFT_BRACE;
+import static ccs.jlox.ast.TokenType.LEFT_PAREN;
+import static ccs.jlox.ast.TokenType.LESS;
+import static ccs.jlox.ast.TokenType.LESS_EQUAL;
+import static ccs.jlox.ast.TokenType.MINUS;
+import static ccs.jlox.ast.TokenType.NIL;
+import static ccs.jlox.ast.TokenType.NUMBER;
+import static ccs.jlox.ast.TokenType.OR;
+import static ccs.jlox.ast.TokenType.PLUS;
+import static ccs.jlox.ast.TokenType.RETURN;
+import static ccs.jlox.ast.TokenType.RIGHT_BRACE;
+import static ccs.jlox.ast.TokenType.RIGHT_PAREN;
+import static ccs.jlox.ast.TokenType.SEMICOLON;
+import static ccs.jlox.ast.TokenType.SLASH;
+import static ccs.jlox.ast.TokenType.STAR;
+import static ccs.jlox.ast.TokenType.STRING;
+import static ccs.jlox.ast.TokenType.SUPER;
+import static ccs.jlox.ast.TokenType.THIS;
+import static ccs.jlox.ast.TokenType.TRUE;
+import static ccs.jlox.ast.TokenType.VAR;
+import static ccs.jlox.ast.TokenType.WHILE;
 
+import ccs.jlox.error.ErrorHandler;
+import ccs.jlox.Lox;
+import ccs.jlox.ast.Expr;
+import ccs.jlox.ast.Stmt;
+import ccs.jlox.ast.Token;
+import ccs.jlox.ast.TokenType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
 public final class Parser {
+  private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
+
   private final List<Token> tokens;
   private int current = 0;
 
@@ -409,7 +417,7 @@ public final class Parser {
   }
 
   private ParseError error(Token token, String message) {
-    Lox.error(token, message);
+    ERROR_HANDLER.error(token, message);
     return new ParseError();
   }
 
