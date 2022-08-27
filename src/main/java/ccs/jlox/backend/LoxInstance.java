@@ -1,13 +1,13 @@
 package ccs.jlox.backend;
 
-import ccs.jlox.error.RuntimeError;
 import ccs.jlox.ast.Token;
+import ccs.jlox.error.RuntimeError;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LoxInstance {
+final class LoxInstance {
   private final Map<String, Object> fields = new HashMap<>();
-  private LoxClass klass;
+  private final LoxClass klass;
 
   LoxInstance(LoxClass klass) {
     this.klass = klass;
@@ -30,6 +30,6 @@ public class LoxInstance {
 
   @Override
   public String toString() {
-    return klass.name + " instance";
+    return klass.getName() + " instance";
   }
 }

@@ -1,11 +1,11 @@
 package ccs.jlox.interm;
 
-import ccs.jlox.error.ErrorHandler;
 import ccs.jlox.Lox;
 import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Stmt;
 import ccs.jlox.ast.Token;
 import ccs.jlox.backend.Interpreter;
+import ccs.jlox.error.ErrorHandler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,16 +23,22 @@ public class Resolver {
     this.interpreter = interpreter;
   }
 
+  public void resolve(List<Stmt> statements) {
+    for (Stmt statement : statements) {
+      resolve(statement);
+    }
+  }
+
   private void resolve(Stmt stmt) {
     switch (stmt) {
       case Stmt.If ifStmt -> resolveIfStmt(ifStmt);
       case Stmt.Return returnStmt -> resolveReturnStmt(returnStmt);
       case Stmt.While whileStmt -> resolveWhileStmt(whileStmt);
       case Stmt.Expression exprStmt -> resolveExpressionStmt(exprStmt);
-      case Stmt.Var varStmt -> resolveVar(varStmt);
+      case Stmt.Var varStmt -> resolveVarStmt(varStmt);
       case Stmt.Function functionStmt -> resolveFunctionStmt(functionStmt);
       case Stmt.Class classStmt -> resolveClassStmt(classStmt);
-      case Stmt.Block blockStmt -> resolveBlock(blockStmt);
+      case Stmt.Block blockStmt -> resolveBlockStmt(blockStmt);
     }
   }
 
@@ -64,7 +70,7 @@ public class Resolver {
     resolve(stmt.expr());
   }
 
-  private void resolveVar(Stmt.Var varStmt) {
+  private void resolveVarStmt(Stmt.Var varStmt) {
     declare(varStmt.name());
     if (varStmt.initializer() != null) {
       resolve(varStmt.initializer());
@@ -134,16 +140,10 @@ public class Resolver {
     currentFunction = enclosingFunction;
   }
 
-  private void resolveBlock(Stmt.Block blockStmt) {
+  private void resolveBlockStmt(Stmt.Block blockStmt) {
     beginScope();
     resolve(blockStmt.statements());
     endScope();
-  }
-
-  public void resolve(List<Stmt> statements) {
-    for (Stmt statement : statements) {
-      resolve(statement);
-    }
   }
 
   private void resolve(Expr expr) {

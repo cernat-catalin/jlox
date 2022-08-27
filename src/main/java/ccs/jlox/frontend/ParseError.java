@@ -1,3 +1,3 @@
 package ccs.jlox.frontend;
 
-public class ParseError extends RuntimeException {}
+final class ParseError extends RuntimeException {}

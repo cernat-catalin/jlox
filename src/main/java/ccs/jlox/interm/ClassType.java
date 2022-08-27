@@ -1,6 +1,6 @@
 package ccs.jlox.interm;
 
-public enum ClassType {
+enum ClassType {
   NONE,
   CLASS,
   SUBCLASS

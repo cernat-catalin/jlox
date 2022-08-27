@@ -1,6 +1,6 @@
 package ccs.jlox.interm;
 
-public enum FunctionType {
+enum FunctionType {
   NONE,
   FUNCTION,
   METHOD,

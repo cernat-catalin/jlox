@@ -39,12 +39,12 @@ import static ccs.jlox.ast.TokenType.TRUE;
 import static ccs.jlox.ast.TokenType.VAR;
 import static ccs.jlox.ast.TokenType.WHILE;
 
-import ccs.jlox.error.ErrorHandler;
 import ccs.jlox.Lox;
 import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Stmt;
 import ccs.jlox.ast.Token;
 import ccs.jlox.ast.TokenType;
+import ccs.jlox.error.ErrorHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;

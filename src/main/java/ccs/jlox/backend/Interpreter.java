@@ -43,7 +43,7 @@ public final class Interpreter {
     }
   }
 
-  private void execute(Stmt stmt) {
+  public void execute(Stmt stmt) {
     switch (stmt) {
       case Stmt.If ifStmt -> executeIfStmt(ifStmt);
       case Stmt.Return returnStmt -> executeReturnStmt(returnStmt);
@@ -56,7 +56,7 @@ public final class Interpreter {
     }
   }
 
-  public void executeIfStmt(Stmt.If ifStmt) {
+  private void executeIfStmt(Stmt.If ifStmt) {
     if (isTruthy(evaluate(ifStmt.condition()))) {
       execute(ifStmt.thenBranch());
     } else if (ifStmt.elseBranch() != null) {
@@ -129,6 +129,7 @@ public final class Interpreter {
     executeBlock(blockStmt.statements(), new Environment(environment));
   }
 
+  // XXX: Keep like this?
   public void executeBlock(List<Stmt> statements, Environment environment) {
     Environment previous = this.environment;
     try {
@@ -143,37 +144,37 @@ public final class Interpreter {
 
   private Object evaluate(Expr expr) {
     return switch (expr) {
-      case Expr.Literal lit -> evaluateLiteral(lit);
-      case Expr.Logical log -> evaluateLogical(log);
-      case Expr.Variable variable -> evaluateVariable(variable);
-      case Expr.Assignment assignment -> evaluateAssignment(assignment);
-      case Expr.Unary unary -> evaluateUnary(unary);
-      case Expr.Binary binary -> evaluateBinary(binary);
-      case Expr.Grouping group -> evaluateGrouping(group);
-      case Expr.Call call -> evaluateCall(call);
-      case Expr.Get get -> evaluateGet(get);
-      case Expr.Set set -> evaluateSet(set);
-      case Expr.This thisExpr -> evaluateThis(thisExpr);
-      case Expr.Super superExpr -> evaluateSuper(superExpr);
+      case Expr.Literal lit -> evaluateLiteralExpr(lit);
+      case Expr.Logical log -> evaluateLogicalExpr(log);
+      case Expr.Variable variable -> evaluateVariableExpr(variable);
+      case Expr.Assignment assignment -> evaluateAssignmentExpr(assignment);
+      case Expr.Unary unary -> evaluateUnaryExpr(unary);
+      case Expr.Binary binary -> evaluateBinaryExpr(binary);
+      case Expr.Grouping group -> evaluateGroupingExpr(group);
+      case Expr.Call call -> evaluateCallExpr(call);
+      case Expr.Get get -> evaluateGetExpr(get);
+      case Expr.Set set -> evaluateSetExpr(set);
+      case Expr.This thisExpr -> evaluateThisExpr(thisExpr);
+      case Expr.Super superExpr -> evaluateSuperExpr(superExpr);
     };
   }
 
-  private Object evaluateLiteral(Expr.Literal lit) {
-    return lit.value();
+  private Object evaluateLiteralExpr(Expr.Literal literalExpr) {
+    return literalExpr.value();
   }
 
-  private Object evaluateLogical(Expr.Logical log) {
-    Object left = evaluate(log.left());
-    if (log.operator().type() == TokenType.OR) {
+  private Object evaluateLogicalExpr(Expr.Logical logExpr) {
+    Object left = evaluate(logExpr.left());
+    if (logExpr.operator().type() == TokenType.OR) {
       if (isTruthy(left)) return left;
     } else {
       if (!isTruthy(left)) return left;
     }
-    return evaluate(log.right());
+    return evaluate(logExpr.right());
   }
 
-  private Object evaluateVariable(Expr.Variable variable) {
-    return lookUpVariable(variable.name(), variable);
+  private Object evaluateVariableExpr(Expr.Variable variableExpr) {
+    return lookUpVariable(variableExpr.name(), variableExpr);
   }
 
   private Object lookUpVariable(Token name, Expr expr) {
@@ -186,24 +187,24 @@ public final class Interpreter {
     }
   }
 
-  private Object evaluateAssignment(Expr.Assignment assignment) {
-    Object value = evaluate(assignment.value());
-    int key = System.identityHashCode(assignment);
+  private Object evaluateAssignmentExpr(Expr.Assignment assignmentExpr) {
+    Object value = evaluate(assignmentExpr.value());
+    int key = System.identityHashCode(assignmentExpr);
     Integer distance = locals.get(key);
     if (distance != null) {
-      environment.assignAt(distance, assignment.name(), value);
+      environment.assignAt(distance, assignmentExpr.name(), value);
     } else {
-      globals.assign(assignment.name(), value);
+      globals.assign(assignmentExpr.name(), value);
     }
     return value;
   }
 
-  private Object evaluateUnary(Expr.Unary unary) {
-    Object right = evaluate(unary.right());
+  private Object evaluateUnaryExpr(Expr.Unary unaryExpr) {
+    Object right = evaluate(unaryExpr.right());
 
-    return switch (unary.operator().type()) {
+    return switch (unaryExpr.operator().type()) {
       case MINUS -> {
-        checkNumberOperand(unary.operator(), right);
+        checkNumberOperand(unaryExpr.operator(), right);
         yield -(double) right;
       }
       case BANG -> !isTruthy(right);
@@ -211,39 +212,39 @@ public final class Interpreter {
     };
   }
 
-  private Object evaluateBinary(Expr.Binary binary) {
-    Object left = evaluate(binary.left());
-    Object right = evaluate(binary.right());
+  private Object evaluateBinaryExpr(Expr.Binary binaryExpr) {
+    Object left = evaluate(binaryExpr.left());
+    Object right = evaluate(binaryExpr.right());
 
-    return switch (binary.operator().type()) {
+    return switch (binaryExpr.operator().type()) {
       case GREATER -> {
-        checkNumberOperands(binary.operator(), left, right);
+        checkNumberOperands(binaryExpr.operator(), left, right);
         yield (double) left > (double) right;
       }
       case GREATER_EQUAL -> {
-        checkNumberOperands(binary.operator(), left, right);
+        checkNumberOperands(binaryExpr.operator(), left, right);
         yield (double) left >= (double) right;
       }
       case LESS -> {
-        checkNumberOperands(binary.operator(), left, right);
+        checkNumberOperands(binaryExpr.operator(), left, right);
         yield (double) left < (double) right;
       }
       case LESS_EQUAL -> {
-        checkNumberOperands(binary.operator(), left, right);
+        checkNumberOperands(binaryExpr.operator(), left, right);
         yield (double) left <= (double) right;
       }
       case BANG_EQUAL -> !isEqual(left, right);
       case EQUAL_EQUAL -> isEqual(left, right);
       case MINUS -> {
-        checkNumberOperands(binary.operator(), left, right);
+        checkNumberOperands(binaryExpr.operator(), left, right);
         yield (double) left - (double) right;
       }
       case SLASH -> {
-        checkNumberOperands(binary.operator(), left, right);
+        checkNumberOperands(binaryExpr.operator(), left, right);
         yield (double) left / (double) right;
       }
       case STAR -> {
-        checkNumberOperands(binary.operator(), left, right);
+        checkNumberOperands(binaryExpr.operator(), left, right);
         yield (double) left * (double) right;
       }
       case PLUS -> {
@@ -253,59 +254,60 @@ public final class Interpreter {
         if (left instanceof String sLeft && right instanceof String sRight) {
           yield sLeft + sRight;
         }
-        throw new RuntimeError(binary.operator(), "Operands must be two numbers or two strings.");
+        throw new RuntimeError(
+            binaryExpr.operator(), "Operands must be two numbers or two strings.");
       }
       default -> new IllegalStateException();
     };
   }
 
-  private Object evaluateGrouping(Expr.Grouping group) {
-    return evaluate(group.expr());
+  private Object evaluateGroupingExpr(Expr.Grouping groupExpr) {
+    return evaluate(groupExpr.expr());
   }
 
-  private Object evaluateCall(Expr.Call call) {
-    Object callee = evaluate(call.callee());
+  private Object evaluateCallExpr(Expr.Call callExpr) {
+    Object callee = evaluate(callExpr.callee());
     List<Object> arguments = new ArrayList<>();
-    for (Expr argument : call.arguments()) {
+    for (Expr argument : callExpr.arguments()) {
       arguments.add(evaluate(argument));
     }
 
     if (!(callee instanceof LoxCallable function)) {
-      throw new RuntimeError(call.paren(), "Can only call functions and classes.");
+      throw new RuntimeError(callExpr.paren(), "Can only call functions and classes.");
     }
 
     if (arguments.size() != function.arity()) {
       throw new RuntimeError(
-          call.paren(),
+          callExpr.paren(),
           "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
     }
 
-    return function.call(this, call.paren(), arguments);
+    return function.call(this, callExpr.paren(), arguments);
   }
 
-  private Object evaluateGet(Expr.Get get) {
-    Object object = evaluate(get.object());
+  private Object evaluateGetExpr(Expr.Get getExpr) {
+    Object object = evaluate(getExpr.object());
     if (object instanceof LoxInstance loxInstance) {
-      return loxInstance.get(get.name());
+      return loxInstance.get(getExpr.name());
     }
-    throw new RuntimeError(get.name(), "Only instances have properties.");
+    throw new RuntimeError(getExpr.name(), "Only instances have properties.");
   }
 
-  private Object evaluateSet(Expr.Set set) {
-    Object object = evaluate(set.object());
+  private Object evaluateSetExpr(Expr.Set setExpr) {
+    Object object = evaluate(setExpr.object());
     if (!(object instanceof LoxInstance loxInstance)) {
-      throw new RuntimeError(set.name(), "Only instances have fields.");
+      throw new RuntimeError(setExpr.name(), "Only instances have fields.");
     }
-    Object value = evaluate(set.value());
-    loxInstance.set(set.name(), value);
+    Object value = evaluate(setExpr.value());
+    loxInstance.set(setExpr.name(), value);
     return value;
   }
 
-  private Object evaluateThis(Expr.This thisExpr) {
+  private Object evaluateThisExpr(Expr.This thisExpr) {
     return lookUpVariable(thisExpr.keyword(), thisExpr);
   }
 
-  private Object evaluateSuper(Expr.Super superExpr) {
+  private Object evaluateSuperExpr(Expr.Super superExpr) {
     int key = System.identityHashCode(superExpr);
     int distance = locals.get(key);
     LoxClass superClass = (LoxClass) environment.getAt(distance, "super");

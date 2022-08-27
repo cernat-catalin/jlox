@@ -4,12 +4,12 @@ import ccs.jlox.ast.Token;
 import java.util.List;
 import java.util.Map;
 
-public class LoxClass implements LoxCallable {
-  final String name;
+final class LoxClass implements LoxCallable {
+  private final String name;
   private final LoxClass superclass;
   private final Map<String, LoxFunction> methods;
 
-  public LoxClass(String name, LoxClass superclass, Map<String, LoxFunction> methods) {
+  LoxClass(String name, LoxClass superclass, Map<String, LoxFunction> methods) {
     this.name = name;
     this.superclass = superclass;
     this.methods = methods;
@@ -25,7 +25,7 @@ public class LoxClass implements LoxCallable {
     return instance;
   }
 
-  public LoxFunction findMethod(String name) {
+  LoxFunction findMethod(String name) {
     if (methods.containsKey(name)) {
       return methods.get(name);
     }
@@ -37,6 +37,10 @@ public class LoxClass implements LoxCallable {
     return null;
   }
 
+  String getName() {
+    return name;
+  }
+
   @Override
   public int arity() {
     LoxFunction initializer = findMethod("init");
@@ -46,6 +50,6 @@ public class LoxClass implements LoxCallable {
 
   @Override
   public String toString() {
-    return name;
+    return String.format("<cls %s>", name);
   }
 }
