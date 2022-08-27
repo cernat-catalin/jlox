@@ -68,6 +68,23 @@ public class Resolver {
     ClassType enclosingClass = currentClass;
     currentClass = ClassType.CLASS;
     declare(stmt.name());
+    define(stmt.name());
+
+    if (stmt.superclass() != null &&
+        stmt.name().lexeme().equals(stmt.superclass().name().lexeme())) {
+      Lox.error(stmt.superclass().name(),
+          "A class can't inherit from itself.");
+    }
+
+    if (stmt.superclass() != null) {
+      currentClass = ClassType.SUBCLASS;
+      resolve(stmt.superclass());
+    }
+
+    if (stmt.superclass() != null) {
+      beginScope();
+      scopes.peek().put("super", true);
+    }
 
     beginScope();
     scopes.peek().put("this", true);
@@ -79,9 +96,13 @@ public class Resolver {
       }
       resolveFunction(method, declaration);
     }
-    define(stmt.name());
 
     endScope();
+
+    if (stmt.superclass() != null) {
+      endScope();
+    }
+
     currentClass = enclosingClass;
   }
 
@@ -131,6 +152,7 @@ public class Resolver {
       case Expr.Get get -> resolveGetExpr(get);
       case Expr.Set set -> resolveSetExpr(set);
       case Expr.This thisExpr -> resolveThisExpr(thisExpr);
+      case Expr.Super superExpr -> resolveSuperExpr(superExpr);
     }
   }
 
@@ -199,6 +221,16 @@ public class Resolver {
     }
 
     resolveLocal(thisExpr, thisExpr.keyword());
+  }
+
+  private void resolveSuperExpr(Expr.Super superExpr) {
+    if (currentClass == ClassType.NONE) {
+      Lox.error(superExpr.keyword(), "Can't use 'super' outside of a class.");
+    } else if (currentClass != ClassType.SUBCLASS) {
+      Lox.error(superExpr.keyword(), "Can't use 'super' in a class with no superclass.");
+    }
+
+    resolveLocal(superExpr, superExpr.keyword());
   }
 
   private void beginScope() {

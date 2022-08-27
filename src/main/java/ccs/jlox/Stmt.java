@@ -13,7 +13,7 @@ public sealed interface Stmt {
 
   record Function(Token name, List<Token> params, List<Stmt> body) implements Stmt {}
 
-  record Class(Token name, List<Function> methods) implements Stmt {}
+  record Class(Token name, Expr.Variable superclass, List<Function> methods) implements Stmt {}
 
   record Return(Token keyword, Expr value) implements Stmt {}
 

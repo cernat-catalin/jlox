@@ -1,7 +1,40 @@
-class Bagel {}
-var bagel = Bagel();
+class Customer {
+  init(first_name, last_name, age) {
+    this.first_name = first_name;
+    this.last_name = last_name;
+    this.age = age;
+    this.deposit = 0;
+  }
 
-bagel.with_cream = true;
-bagel.message = "Hello World";
-print(bagel.with_cream);
-print(bagel.message);
+  get_full_name() {
+    return this.first_name + " " + this.last_name;
+  }
+
+  say_hello() {
+    print("Hello from Customer");
+  }
+}
+
+class GoodCustomer < Customer {
+  reward(amount) {
+    this.deposit = this.deposit + amount;
+  }
+
+  say_hello() {
+    print("Hello from Good Customer");
+  }
+}
+
+var customer1 = Customer("Catalin", "Cernat", 27);
+print(customer1.get_full_name());
+var hello_func = customer1.say_hello;
+hello_func();
+
+var customer2 = GoodCustomer("Catalin", "Cernat", 27);
+print(customer2.get_full_name());
+hello_func = customer2.say_hello;
+hello_func();
+
+print(customer2.deposit);
+var hello_func = customer2.reward(13);
+print(customer2.deposit);

@@ -2,5 +2,6 @@ package ccs.jlox;
 
 public enum ClassType {
   NONE,
-  CLASS
+  CLASS,
+  SUBCLASS
 }

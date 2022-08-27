@@ -80,8 +80,21 @@ public final class Interpreter {
   }
 
   private void executeClassStmt(Stmt.Class classStmt) {
+    Object superclass = null;
+    if (classStmt.superclass() != null) {
+      superclass = evaluate(classStmt.superclass());
+      if (!(superclass instanceof LoxClass)) {
+        throw new RuntimeError(classStmt.superclass().name(),
+            "Superclass must be a class.");
+      }
+    }
     // XXX: Why two step process (first define class then assign it)?
     environment.define(classStmt.name().lexeme(), null);
+
+    if (classStmt.superclass() != null) {
+      environment = new Environment(environment);
+      environment.define("super", superclass);
+    }
 
     Map<String, LoxFunction> methods = new HashMap<>();
     for (Stmt.Function method : classStmt.methods()) {
@@ -90,7 +103,12 @@ public final class Interpreter {
       methods.put(method.name().lexeme(), function);
     }
 
-    LoxClass klass = new LoxClass(classStmt.name().lexeme(), methods);
+    LoxClass klass = new LoxClass(classStmt.name().lexeme(), (LoxClass)superclass, methods);
+
+    if (superclass != null) {
+      environment = environment.ancestor(1);
+    }
+
     environment.assign(classStmt.name(), klass);
   }
 
@@ -123,6 +141,7 @@ public final class Interpreter {
       case Expr.Get get -> evaluateGet(get);
       case Expr.Set set -> evaluateSet(set);
       case Expr.This thisExpr -> evaluateThis(thisExpr);
+      case Expr.Super superExpr -> evaluateSuper(superExpr);
     };
   }
 
@@ -271,6 +290,20 @@ public final class Interpreter {
 
   private Object evaluateThis(Expr.This thisExpr) {
     return lookUpVariable(thisExpr.keyword(), thisExpr);
+  }
+
+  private Object evaluateSuper(Expr.Super superExpr) {
+    int key = System.identityHashCode(superExpr);
+    int distance = locals.get(key);
+    LoxClass superClass = (LoxClass) environment.getAt(distance, "super");
+    LoxInstance object = (LoxInstance) environment.getAt(distance - 1, "this");
+    LoxFunction method = superClass.findMethod(superExpr.method().lexeme());
+
+    if (method == null) {
+      throw new RuntimeError(superExpr.method(), "Undefined property '" + superExpr.method().lexeme() + "'.");
+    }
+
+    return method.bind(object);
   }
 
   // XXX: Ugly hack. Fix this!

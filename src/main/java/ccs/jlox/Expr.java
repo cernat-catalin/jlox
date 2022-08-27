@@ -15,6 +15,8 @@ public sealed interface Expr {
 
   record This(Token keyword) implements Expr {}
 
+  record Super(Token keyword, Token method) implements Expr {}
+
   record Grouping(Expr expr) implements Expr {}
 
   record Literal(Object value) implements Expr {}

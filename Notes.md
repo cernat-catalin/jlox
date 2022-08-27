@@ -13,6 +13,7 @@
 - Make resolver more efficient. See challenge 4 in chapter 11 for more details
 - Add support for static class methods. See Smalltalk and Ruby "metaclasses" (make LoxClass extend LoxInstance)
 - Add support for _getter_ methods (they look like a field but actually compute the value on demand; see book)
+- Add support for traits
 
 ## Other
 - `Scanner` is kind of state based. Can we reduce that?

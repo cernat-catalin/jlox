@@ -16,6 +16,7 @@ public final class AstPrinter {
       case Expr.Grouping grouping -> parenthesize("group", grouping.expr());
       case Expr.Variable variable -> parenthesize("var", variable);
       case Expr.Assignment assignment -> parenthesize("assign", assignment);
+      case Expr.Super superExpr -> superExpr.keyword().lexeme();
     };
   }
 
