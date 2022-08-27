@@ -1,15 +1,16 @@
 package ccs.jlox.backend;
 
-import ccs.jlox.error.ErrorHandler;
 import ccs.jlox.Lox;
-import ccs.jlox.error.RuntimeError;
 import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Stmt;
 import ccs.jlox.ast.Token;
 import ccs.jlox.ast.TokenType;
 import ccs.jlox.backend.ffi.AssertFunction;
 import ccs.jlox.backend.ffi.ClockFunction;
+import ccs.jlox.backend.ffi.NativeFunction;
 import ccs.jlox.backend.ffi.PrintFunction;
+import ccs.jlox.error.ErrorHandler;
+import ccs.jlox.error.RuntimeError;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,9 +24,13 @@ public final class Interpreter {
   private Environment environment = globals;
 
   public Interpreter() {
-    globals.define("print", new PrintFunction());
-    globals.define("clock", new ClockFunction());
-    globals.define("assert", new AssertFunction());
+    addNativeFunction(new PrintFunction());
+    addNativeFunction(new ClockFunction());
+    addNativeFunction(new AssertFunction());
+  }
+
+  private void addNativeFunction(NativeFunction nativeFunction) {
+    globals.define(nativeFunction.getName(), nativeFunction);
   }
 
   public void execute(List<Stmt> stmts) {

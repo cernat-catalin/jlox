@@ -1,12 +1,12 @@
 package ccs.jlox.backend.ffi;
 
-import ccs.jlox.error.RuntimeError;
 import ccs.jlox.ast.Token;
 import ccs.jlox.backend.Interpreter;
 import ccs.jlox.backend.LoxCallable;
+import ccs.jlox.error.RuntimeError;
 import java.util.List;
 
-public class AssertFunction implements LoxCallable {
+public final class AssertFunction implements LoxCallable, NativeFunction {
   @Override
   public int arity() {
     return 2;
@@ -26,6 +26,11 @@ public class AssertFunction implements LoxCallable {
 
   @Override
   public String toString() {
-    return "<native fn>";
+    return prettyName();
+  }
+
+  @Override
+  public String getName() {
+    return "assert";
   }
 }

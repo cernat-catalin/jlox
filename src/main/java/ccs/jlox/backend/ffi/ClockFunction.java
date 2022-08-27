@@ -5,7 +5,7 @@ import ccs.jlox.backend.Interpreter;
 import ccs.jlox.backend.LoxCallable;
 import java.util.List;
 
-public final class ClockFunction implements LoxCallable {
+public final class ClockFunction implements LoxCallable, NativeFunction {
   @Override
   public int arity() {
     return 0;
@@ -18,6 +18,11 @@ public final class ClockFunction implements LoxCallable {
 
   @Override
   public String toString() {
-    return "<native fn>";
+    return prettyName();
+  }
+
+  @Override
+  public String getName() {
+    return "clock";
   }
 }

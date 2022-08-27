@@ -5,7 +5,7 @@ import ccs.jlox.backend.Interpreter;
 import ccs.jlox.backend.LoxCallable;
 import java.util.List;
 
-public class PrintFunction implements LoxCallable {
+public class PrintFunction implements LoxCallable, NativeFunction {
   @Override
   public int arity() {
     return 1;
@@ -20,7 +20,12 @@ public class PrintFunction implements LoxCallable {
 
   @Override
   public String toString() {
-    return "<native fn>";
+    return prettyName();
+  }
+
+  @Override
+  public String getName() {
+    return "print";
   }
 
   private static String stringify(Object object) {
