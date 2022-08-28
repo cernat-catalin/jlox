@@ -21,6 +21,7 @@ import static ccs.jlox.ast.TokenType.IF;
 import static ccs.jlox.ast.TokenType.IMPORT;
 import static ccs.jlox.ast.TokenType.LEFT_BRACE;
 import static ccs.jlox.ast.TokenType.LEFT_PAREN;
+import static ccs.jlox.ast.TokenType.LEFT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.LESS;
 import static ccs.jlox.ast.TokenType.LESS_EQUAL;
 import static ccs.jlox.ast.TokenType.MINUS;
@@ -31,6 +32,7 @@ import static ccs.jlox.ast.TokenType.PLUS;
 import static ccs.jlox.ast.TokenType.RETURN;
 import static ccs.jlox.ast.TokenType.RIGHT_BRACE;
 import static ccs.jlox.ast.TokenType.RIGHT_PAREN;
+import static ccs.jlox.ast.TokenType.RIGHT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.SEMICOLON;
 import static ccs.jlox.ast.TokenType.SLASH;
 import static ccs.jlox.ast.TokenType.STAR;
@@ -100,6 +102,8 @@ public final class Scanner {
     switch (c) {
       case '(' -> addToken(LEFT_PAREN);
       case ')' -> addToken(RIGHT_PAREN);
+      case '[' -> addToken(LEFT_SQUARE_BRACKET);
+      case ']' -> addToken(RIGHT_SQUARE_BRACKET);
       case '{' -> addToken(LEFT_BRACE);
       case '}' -> addToken(RIGHT_BRACE);
       case ',' -> addToken(COMMA);

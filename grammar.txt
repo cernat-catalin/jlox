@@ -52,9 +52,10 @@ term            -> factor (("+", "-") factor)*
 factor          -> unary (("*", "/") unary)*
 unary           -> ("!", "-") unary
                  | call
-call            -> primary ("(" arguments? ")" | "." IDENTIFIER)*
+call            -> primary ("(" arguments? ")" | "." IDENTIFIER | "[" expression "]")*
 arguments       -> expression ("," expression)*
 primary         -> NUMBER | STRING | "true" | "false" | "nil"
                  | "(" expression ")"
                  | IDENTIFIER
                  | "super" "." IDENTIFIER
+                 | "[" expression "]" "{" "}"

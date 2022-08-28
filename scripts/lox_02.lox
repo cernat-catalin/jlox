@@ -12,3 +12,9 @@ var t1 = time.Time();
 print(t1.time);
 sleep(100);
 print(t1.now());
+
+
+var x = [100]{};
+x[0] = "Hello";
+x[99] = "World";
+print(x[99]);

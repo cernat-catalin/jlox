@@ -1,0 +1,35 @@
+var x = [100]{};
+x[0] = 1;
+x[99] = "Hello";
+
+assert(x[0] == 1, "Array wrong result!");
+assert(x[1] == nil, "Array wrong result!");
+assert(x[99] == "Hello", "Array wrong result!");
+
+var a = 10;
+var b = 12;
+
+x[a] = "A";
+x[a + b] = "plus";
+x[b - a] = "minus";
+x[40 + 50] = 90;
+assert(x[10] == "A", "Array wrong result!");
+assert(x[22] == "plus", "Array wrong result!");
+assert(x[2] == "minus", "Array wrong result!");
+assert(x[90] == 90, "Array wrong result!");
+
+assert(x[a] == "A", "Array wrong result!");
+assert(x[40 + 50] == 90, "Array wrong result!");
+
+for (var j = 0; j < 100; j = j + 1) {
+  x[j] = j;
+}
+
+for (var i = 0; i < 100; i = i + 1) {
+  assert(x[i] == i, "Array wrong result!");
+}
+
+var s = 15;
+var y = [s]{};
+y[4] = "Hello";
+assert(y[4] == "Hello", "Array wrong result!");

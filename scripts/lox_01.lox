@@ -2,12 +2,13 @@ class Customer {
   init(first_name, last_name, age) {
     this.first_name = first_name;
     this.last_name = last_name;
+    this.full_name = this.first_name + " " + this.last_name;
     this.age = age;
     this.deposit = 0;
   }
 
   get_full_name() {
-    return this.first_name + " " + this.last_name;
+    return this.full_name;
   }
 
   say_hello() {

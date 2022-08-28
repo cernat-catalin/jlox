@@ -1,0 +1,36 @@
+class List {
+  init() {
+    this.size = 0;
+    this.capacity = 8;
+    this.data = [this.capacity]{};
+  }
+
+  add(elem) {
+    if (this.size == this.capacity) {
+      this.capacity = this.capacity * 2;
+      this.new_data = [this.capacity]{};
+
+      for (var i = 0; i < this.size; i = i + 1) {
+        this.new_data[i] = this.data[i];
+      }
+
+      this.data = this.new_data;
+    }
+
+    this.data[this.size] = elem;
+    this.size = this.size + 1;
+  }
+
+  remove() {
+    if (this.size != 0) {
+      this.size = this.size - 1;
+      return this.data[size];
+    }
+
+    return nil;
+  }
+
+  get(idx) {
+    return this.data[idx];
+  }
+}

@@ -1,0 +1,11 @@
+import std.list as list;
+
+var l = list.List();
+
+l.add(1);
+l.add("Hello");
+l.add(false);
+
+for (var i = 0; i < l.size; i = i + 1) {
+  print(l.get(i));
+}

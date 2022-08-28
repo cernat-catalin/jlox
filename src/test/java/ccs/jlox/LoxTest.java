@@ -17,6 +17,9 @@ final class LoxTest {
   void runTests() throws IOException {
     ErrorHandler errorHandler = Lox.getErrorHandler();
     for (File file : getTestFiles()) {
+
+//      if (!file.getName().equals("array_test.lox")) continue;
+
       LOG.info("Running tests in file: {}", file.getName());
       Lox.runSource(Files.readString(file.toPath()));
 

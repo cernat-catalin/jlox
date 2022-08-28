@@ -21,6 +21,7 @@ import static ccs.jlox.ast.TokenType.IF;
 import static ccs.jlox.ast.TokenType.IMPORT;
 import static ccs.jlox.ast.TokenType.LEFT_BRACE;
 import static ccs.jlox.ast.TokenType.LEFT_PAREN;
+import static ccs.jlox.ast.TokenType.LEFT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.LESS;
 import static ccs.jlox.ast.TokenType.LESS_EQUAL;
 import static ccs.jlox.ast.TokenType.MINUS;
@@ -31,6 +32,7 @@ import static ccs.jlox.ast.TokenType.PLUS;
 import static ccs.jlox.ast.TokenType.RETURN;
 import static ccs.jlox.ast.TokenType.RIGHT_BRACE;
 import static ccs.jlox.ast.TokenType.RIGHT_PAREN;
+import static ccs.jlox.ast.TokenType.RIGHT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.SEMICOLON;
 import static ccs.jlox.ast.TokenType.SLASH;
 import static ccs.jlox.ast.TokenType.STAR;
@@ -257,14 +259,16 @@ public final class Parser {
   private Expr assignment() {
     Expr expr = or();
 
+    // XXX: simplify
     if (match(EQUAL)) {
       Token equals = previous();
       Expr value = assignment();
       if (expr instanceof Expr.Variable variable) {
-        Token name = variable.name();
-        return new Expr.Assignment(name, value);
+        return new Expr.Assignment(variable, equals, value);
       } else if (expr instanceof Expr.Get get) {
-        return new Expr.Set(get.object(), get.name(), value);
+        return new Expr.Assignment(get, equals, value);
+      } else if (expr instanceof Expr.ArrayIndex arrayIndex) {
+        return new Expr.Assignment(arrayIndex, equals, value);
       }
       error(equals, "Invalid assignment target.");
     }
@@ -349,6 +353,10 @@ public final class Parser {
       } else if (match(DOT)) {
         Token name = consume(IDENTIFIER, "Expect property name after '.'.");
         expr = new Expr.Get(expr, name);
+      } else if (match(LEFT_SQUARE_BRACKET)) {
+        Expr index = expression();
+        Token rightParen = consume(RIGHT_SQUARE_BRACKET, "Expected ']' in array indexing.");
+        expr = new Expr.ArrayIndex(expr, rightParen, index);
       } else {
         break;
       }
@@ -391,6 +399,13 @@ public final class Parser {
       Expr expr = expression();
       consume(RIGHT_PAREN, "Expect ')' after expression.");
       return new Expr.Grouping(expr);
+    }
+    if (match(LEFT_SQUARE_BRACKET)) {
+      Expr size = expression();
+      Token rightBracket = consume(RIGHT_SQUARE_BRACKET, "Expect closing square bracket in array creation.");
+      consume(LEFT_BRACE, "Expect opening brace in array creation.");
+      consume(RIGHT_BRACE, "Expect closing brace in array creation.");
+      return new Expr.ArrayCreation(size, rightBracket);
     }
 
     throw error(peek(), "Expect expression.");

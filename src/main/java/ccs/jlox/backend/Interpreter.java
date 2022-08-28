@@ -188,9 +188,10 @@ public final class Interpreter {
       case Expr.Grouping group -> evaluateGroupingExpr(group);
       case Expr.Call call -> evaluateCallExpr(call);
       case Expr.Get get -> evaluateGetExpr(get);
-      case Expr.Set set -> evaluateSetExpr(set);
       case Expr.This thisExpr -> evaluateThisExpr(thisExpr);
       case Expr.Super superExpr -> evaluateSuperExpr(superExpr);
+      case Expr.ArrayCreation arrayCExpr -> evaluateArrayCreationExpr(arrayCExpr);
+      case Expr.ArrayIndex arrayIndexExpr -> evaluateArrayIndexExpr(arrayIndexExpr);
     };
   }
 
@@ -222,16 +223,40 @@ public final class Interpreter {
     }
   }
 
+  // XXX: make pretty and make better error handling with all the nested instanceof
   private Object evaluateAssignmentExpr(Expr.Assignment assignmentExpr) {
     Object value = evaluate(assignmentExpr.value());
-    int key = System.identityHashCode(assignmentExpr);
-    Integer distance = getLocals().get(key);
-    if (distance != null) {
-      getEnvironment().assignAt(distance, assignmentExpr.name(), value);
-    } else {
-      getGlobals().assign(assignmentExpr.name(), value);
+
+    if (assignmentExpr.variable() instanceof Expr.Variable variable) {
+      int key = System.identityHashCode(assignmentExpr);
+
+      Integer distance = getLocals().get(key);
+      if (distance != null) {
+        getEnvironment().assignAt(distance, variable.name(), value);
+      } else {
+        getGlobals().assign(variable.name(), value);
+      }
+      return value;
+    } else if (assignmentExpr.variable() instanceof Expr.Get get) {
+      Object object = evaluate(get.object());
+      if (object instanceof LoxInstance loxInstance) {
+        loxInstance.set(get.name(), value);
+        return value;
+      }
+    } else if (assignmentExpr.variable() instanceof Expr.ArrayIndex indexExpr) {
+      Object object = evaluate(indexExpr.array());
+      if (object instanceof LoxArray loxArray) {
+        Object index = evaluate(indexExpr.idx());
+
+        if (index instanceof Double doubleIndex) {
+          loxArray.set(doubleIndex.intValue(), value);
+          return value;
+        }
+      }
     }
-    return value;
+
+    // XXX: Change name of error?
+    throw new RuntimeError(assignmentExpr.equals(), "Invalid left value to assignment operator.");
   }
 
   private Object evaluateUnaryExpr(Expr.Unary unaryExpr) {
@@ -337,16 +362,6 @@ public final class Interpreter {
     throw new RuntimeError(getExpr.name(), "Only instances or modules have properties.");
   }
 
-  private Object evaluateSetExpr(Expr.Set setExpr) {
-    Object object = evaluate(setExpr.object());
-    if (!(object instanceof LoxInstance loxInstance)) {
-      throw new RuntimeError(setExpr.name(), "Only instances have fields.");
-    }
-    Object value = evaluate(setExpr.value());
-    loxInstance.set(setExpr.name(), value);
-    return value;
-  }
-
   private Object evaluateThisExpr(Expr.This thisExpr) {
     return lookUpVariable(thisExpr.keyword(), thisExpr);
   }
@@ -364,6 +379,30 @@ public final class Interpreter {
     }
 
     return method.bind(object);
+  }
+
+  private Object evaluateArrayCreationExpr(Expr.ArrayCreation arrayCExpr) {
+    Object size = evaluate(arrayCExpr.size());
+
+    if (size instanceof Double doubleSize) {
+      return new LoxArray(doubleSize.intValue());
+    }
+
+    throw new RuntimeError(arrayCExpr.rightBracket(), "Array size must be a number.");
+  }
+
+  private Object evaluateArrayIndexExpr(Expr.ArrayIndex arrayIndexExpr) {
+    Object object = evaluate(arrayIndexExpr.array());
+
+    if (object instanceof LoxArray loxArray) {
+      Object index = evaluate(arrayIndexExpr.idx());
+      if (index instanceof Double doubleIndex) {
+        return loxArray.get(doubleIndex.intValue());
+      }
+      throw new RuntimeError(arrayIndexExpr.rightParen(), "Cannot index non array object.");
+    }
+
+    throw new RuntimeError(arrayIndexExpr.rightParen(), "Cannot index non array object.");
   }
 
   // XXX: Ugly hack. Fix this!

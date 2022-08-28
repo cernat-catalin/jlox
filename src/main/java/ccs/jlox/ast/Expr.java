@@ -11,8 +11,6 @@ public sealed interface Expr {
   // Property access
   record Get(Expr object, Token name) implements Expr {}
 
-  record Set(Expr object, Token name, Expr value) implements Expr {}
-
   record This(Token keyword) implements Expr {}
 
   record Super(Token keyword, Token method) implements Expr {}
@@ -27,5 +25,8 @@ public sealed interface Expr {
 
   record Variable(Token name) implements Expr {}
 
-  record Assignment(Token name, Expr value) implements Expr {}
+  record Assignment(Expr variable, Token equals, Expr value) implements Expr {}
+
+  record ArrayCreation(Expr size, Token rightBracket) implements Expr {}
+  record ArrayIndex(Expr array, Token rightParen, Expr idx) implements Expr {}
 }

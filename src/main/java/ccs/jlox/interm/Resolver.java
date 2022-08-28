@@ -147,7 +147,9 @@ public class Resolver {
     endScope();
   }
 
-  private void resolveImportStmt(Stmt.Import importStmt) {}
+  private void resolveImportStmt(Stmt.Import importStmt) {
+    // XXX: Need to do something here ?
+  }
 
   private void resolve(Expr expr) {
     switch (expr) {
@@ -160,9 +162,10 @@ public class Resolver {
       case Expr.Grouping group -> resolveGroupingExpr(group);
       case Expr.Call call -> resolveCallExpr(call);
       case Expr.Get get -> resolveGetExpr(get);
-      case Expr.Set set -> resolveSetExpr(set);
       case Expr.This thisExpr -> resolveThisExpr(thisExpr);
       case Expr.Super superExpr -> resolveSuperExpr(superExpr);
+      case Expr.ArrayCreation arrayCExpr -> resolveArrayCreationExpr(arrayCExpr);
+      case Expr.ArrayIndex arrayIndex -> resolveArrayIndexExpr(arrayIndex);
     }
   }
 
@@ -184,7 +187,16 @@ public class Resolver {
 
   private void resolveAssignExpr(Expr.Assignment expr) {
     resolve(expr.value());
-    resolveLocal(expr, expr.name());
+
+    // XXX: Need more cases here (ArrayIndex)?
+    if (expr.variable() instanceof Expr.Variable variable) {
+      resolveLocal(expr, variable.name());
+    } else if (expr.variable() instanceof Expr.Get get) {
+      resolve(get.object());
+    } else if (expr.variable() instanceof Expr.ArrayIndex index) {
+      resolve(index.array());
+      resolve(index.idx());
+    }
   }
 
   private void resolveUnaryExpr(Expr.Unary expr) {
@@ -220,11 +232,6 @@ public class Resolver {
     resolve(expr.object());
   }
 
-  private void resolveSetExpr(Expr.Set expr) {
-    resolve(expr.value());
-    resolve(expr.object());
-  }
-
   private void resolveThisExpr(Expr.This thisExpr) {
     if (currentClass == ClassType.NONE) {
       ERROR_HANDLER.error(thisExpr.keyword(), "Can't use 'this' outside of a class.");
@@ -241,6 +248,16 @@ public class Resolver {
     }
 
     resolveLocal(superExpr, superExpr.keyword());
+  }
+
+  private void resolveArrayCreationExpr(Expr.ArrayCreation arrayCExpr) {
+    resolve(arrayCExpr.size());
+  }
+
+  private void resolveArrayIndexExpr(Expr.ArrayIndex arrayIndexExpr) {
+    resolve(arrayIndexExpr.array());
+    resolve(arrayIndexExpr.idx());
+    // XXX: Need to do something here ?
   }
 
   private void beginScope() {
