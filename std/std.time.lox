@@ -1,0 +1,14 @@
+class Time {
+  init() {
+    this.time = this.now();
+  }
+
+  now() {
+    // native fn
+    return clock();
+  }
+
+  add_millis(millis) {
+    this.time = this.time + millis;
+  }
+}

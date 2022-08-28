@@ -29,6 +29,7 @@ statement       -> exprStmt
                  | returnStmt
                  | whileStmt
                  | block
+                 | importStmt
 exprStmt        -> expression ";"
 forStmt         -> "for" "(" (varDecl | exprStmt | ";")
                    expression? ";"
@@ -38,6 +39,7 @@ ifStmt          -> "if" "(" expression ")" statement
 returnStmt      -> "return" expression? ";"
 whileStmt       -> "while" "(" expression ")" statement
 block           -> "{" declaration* "}"
+importStmt      -> "import" (IDENTIFIER "."?)*
 
 expression      -> assignment
 assignment      -> (call ".")? IDENTIFIER "=" assignment

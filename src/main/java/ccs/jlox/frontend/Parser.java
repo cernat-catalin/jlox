@@ -1,6 +1,7 @@
 package ccs.jlox.frontend;
 
 import static ccs.jlox.ast.TokenType.AND;
+import static ccs.jlox.ast.TokenType.AS;
 import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
 import static ccs.jlox.ast.TokenType.CLASS;
@@ -17,6 +18,7 @@ import static ccs.jlox.ast.TokenType.GREATER;
 import static ccs.jlox.ast.TokenType.GREATER_EQUAL;
 import static ccs.jlox.ast.TokenType.IDENTIFIER;
 import static ccs.jlox.ast.TokenType.IF;
+import static ccs.jlox.ast.TokenType.IMPORT;
 import static ccs.jlox.ast.TokenType.LEFT_BRACE;
 import static ccs.jlox.ast.TokenType.LEFT_PAREN;
 import static ccs.jlox.ast.TokenType.LESS;
@@ -142,6 +144,7 @@ public final class Parser {
     if (match(RETURN)) return returnStatement();
     if (match(WHILE)) return whileStatement();
     if (match(LEFT_BRACE)) return blockStatement();
+    if (match(IMPORT)) return importStatement();
     return expressionStatement();
   }
 
@@ -221,6 +224,24 @@ public final class Parser {
     }
     consume(RIGHT_BRACE, "Expect '}' after block.");
     return new Stmt.Block(statements);
+  }
+
+  private Stmt importStatement() {
+    // XXX: Change to do-while ?
+    Token subPath = consume(IDENTIFIER, "Expected identifier.");
+    List<Token> path = new ArrayList<>();
+    path.add(subPath);
+
+    while (match(DOT)) {
+      path.add(consume(IDENTIFIER, "Expected identifier."));
+    }
+
+    consume(AS, "Expected 'as' qualifier.");
+    Token moduleName = consume(IDENTIFIER, "Expected module qualifier.");
+
+    consume(SEMICOLON, "Expect ';' after import statement.");
+
+    return new Stmt.Import(path, moduleName);
   }
 
   private Stmt expressionStatement() {

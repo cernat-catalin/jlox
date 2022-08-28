@@ -5,33 +5,27 @@ import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Stmt;
 import ccs.jlox.ast.Token;
 import ccs.jlox.ast.TokenType;
-import ccs.jlox.backend.ffi.AssertFunction;
-import ccs.jlox.backend.ffi.ClockFunction;
-import ccs.jlox.backend.ffi.NativeFunction;
-import ccs.jlox.backend.ffi.PrintFunction;
 import ccs.jlox.error.ErrorHandler;
 import ccs.jlox.error.RuntimeError;
+import ccs.jlox.frontend.Parser;
+import ccs.jlox.frontend.Scanner;
+import ccs.jlox.interm.Resolver;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class Interpreter {
   private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
 
-  private final Environment globals = new Environment();
-  private final Map<Integer, Integer> locals = new HashMap<>();
-  private Environment environment = globals;
+  private final LoxModule entrypoint = new LoxModule("", List.of());
+  private LoxModule currentLoxModule = entrypoint;
 
-  public Interpreter() {
-    addNativeFunction(new PrintFunction());
-    addNativeFunction(new ClockFunction());
-    addNativeFunction(new AssertFunction());
-  }
-
-  private void addNativeFunction(NativeFunction nativeFunction) {
-    globals.define(nativeFunction.getName(), nativeFunction);
-  }
+  public Interpreter() {}
 
   public void execute(List<Stmt> stmts) {
     try {
@@ -53,6 +47,7 @@ public final class Interpreter {
       case Stmt.Function functionStmt -> executeFunctionStmt(functionStmt);
       case Stmt.Class classStmt -> executeClassStmt(classStmt);
       case Stmt.Block blockStmt -> executeBlockStmt(blockStmt);
+      case Stmt.Import importStmt -> executeImportStmt(importStmt);
     }
   }
 
@@ -85,12 +80,12 @@ public final class Interpreter {
     if (varStmt.initializer() != null) {
       value = evaluate(varStmt.initializer());
     }
-    environment.define(varStmt.name().lexeme(), value);
+    getEnvironment().define(varStmt.name().lexeme(), value);
   }
 
   private void executeFunctionStmt(Stmt.Function functionStmt) {
-    LoxFunction function = new LoxFunction(functionStmt, environment, false);
-    environment.define(functionStmt.name().lexeme(), function);
+    LoxFunction function = new LoxFunction(functionStmt, getEnvironment(), false);
+    getEnvironment().define(functionStmt.name().lexeme(), function);
   }
 
   private void executeClassStmt(Stmt.Class classStmt) {
@@ -102,44 +97,84 @@ public final class Interpreter {
       }
     }
     // XXX: Why two step process (first define class then assign it)?
-    environment.define(classStmt.name().lexeme(), null);
+    getEnvironment().define(classStmt.name().lexeme(), null);
 
     if (classStmt.superclass() != null) {
-      environment = new Environment(environment);
-      environment.define("super", superclass);
+      setEnvironment(new Environment(getEnvironment()));
+      getEnvironment().define("super", superclass);
     }
 
     Map<String, LoxFunction> methods = new HashMap<>();
     for (Stmt.Function method : classStmt.methods()) {
       LoxFunction function =
-          new LoxFunction(method, environment, method.name().lexeme().equals("init"));
+          new LoxFunction(method, getEnvironment(), method.name().lexeme().equals("init"));
       methods.put(method.name().lexeme(), function);
     }
 
     LoxClass klass = new LoxClass(classStmt.name().lexeme(), (LoxClass) superclass, methods);
 
     if (superclass != null) {
-      environment = environment.ancestor(1);
+      setEnvironment(getEnvironment().ancestor(1));
     }
 
-    environment.assign(classStmt.name(), klass);
+    getEnvironment().assign(classStmt.name(), klass);
   }
 
   private void executeBlockStmt(Stmt.Block blockStmt) {
-    executeBlock(blockStmt.statements(), new Environment(environment));
+    executeBlock(blockStmt.statements(), new Environment(getEnvironment()));
   }
 
   // XXX: Keep like this?
   public void executeBlock(List<Stmt> statements, Environment environment) {
-    Environment previous = this.environment;
+    Environment previous = getEnvironment();
     try {
-      this.environment = environment;
+      setEnvironment(environment);
       for (Stmt statement : statements) {
         execute(statement);
       }
     } finally {
-      this.environment = previous;
+      setEnvironment(previous);
     }
+  }
+
+  // XXX; Very hacky; find a better way
+  private void executeImportStmt(Stmt.Import importStmt) {
+    String path = importStmt.path().stream().map(Token::lexeme).collect(Collectors.joining("."));
+    // XXX: Add support for non-std modules
+    try {
+      String source = Files.readString(Path.of("std", path + ".lox"));
+      LoxModule loxModule = loadModule(importStmt.name().lexeme(), importStmt.path(), source);
+      if (loxModule == null) {
+        throw new RuntimeError(importStmt.path().get(0), "Could not parse module.");
+      }
+      getEnvironment().define(loxModule.getName(), loxModule);
+    } catch (IOException e) {
+      throw new RuntimeError(importStmt.path().get(0), "Could not load module.");
+    }
+  }
+
+  private LoxModule loadModule(String moduleName, List<Token> modulePath, String source) {
+    Scanner scanner = new Scanner(source);
+    List<Token> tokens = scanner.scanTokens();
+
+    Parser parser = new Parser(tokens);
+    List<Stmt> stmts = parser.parse();
+
+    if (ERROR_HANDLER.hadCompileError()) return null;
+
+    // XXX: Is this correct?
+    Resolver resolver = new Resolver(this);
+    resolver.resolve(stmts);
+    if (ERROR_HANDLER.hadCompileError()) return null;
+
+    LoxModule newLoxModule = new LoxModule(moduleName, modulePath);
+
+    LoxModule previousModule = currentLoxModule;
+    currentLoxModule = newLoxModule;
+    execute(stmts);
+    currentLoxModule = previousModule;
+
+    return newLoxModule;
   }
 
   private Object evaluate(Expr expr) {
@@ -179,22 +214,22 @@ public final class Interpreter {
 
   private Object lookUpVariable(Token name, Expr expr) {
     int key = System.identityHashCode(expr);
-    Integer distance = locals.get(key);
+    Integer distance = getLocals().get(key);
     if (distance != null) {
-      return environment.getAt(distance, name.lexeme());
+      return getEnvironment().getAt(distance, name.lexeme());
     } else {
-      return globals.get(name);
+      return getGlobals().get(name);
     }
   }
 
   private Object evaluateAssignmentExpr(Expr.Assignment assignmentExpr) {
     Object value = evaluate(assignmentExpr.value());
     int key = System.identityHashCode(assignmentExpr);
-    Integer distance = locals.get(key);
+    Integer distance = getLocals().get(key);
     if (distance != null) {
-      environment.assignAt(distance, assignmentExpr.name(), value);
+      getEnvironment().assignAt(distance, assignmentExpr.name(), value);
     } else {
-      globals.assign(assignmentExpr.name(), value);
+      getGlobals().assign(assignmentExpr.name(), value);
     }
     return value;
   }
@@ -290,7 +325,16 @@ public final class Interpreter {
     if (object instanceof LoxInstance loxInstance) {
       return loxInstance.get(getExpr.name());
     }
-    throw new RuntimeError(getExpr.name(), "Only instances have properties.");
+    if (object instanceof LoxModule loxModule) {
+      LoxModule previousModule = currentLoxModule;
+      currentLoxModule = loxModule;
+      // XXX: This might work for globals (as there is a fallback there when the key is not in the
+      // locals)
+      Object value = evaluateVariableExpr(new Expr.Variable(getExpr.name()));
+      currentLoxModule = previousModule;
+      return value;
+    }
+    throw new RuntimeError(getExpr.name(), "Only instances or modules have properties.");
   }
 
   private Object evaluateSetExpr(Expr.Set setExpr) {
@@ -309,9 +353,9 @@ public final class Interpreter {
 
   private Object evaluateSuperExpr(Expr.Super superExpr) {
     int key = System.identityHashCode(superExpr);
-    int distance = locals.get(key);
-    LoxClass superClass = (LoxClass) environment.getAt(distance, "super");
-    LoxInstance object = (LoxInstance) environment.getAt(distance - 1, "this");
+    int distance = getLocals().get(key);
+    LoxClass superClass = (LoxClass) getEnvironment().getAt(distance, "super");
+    LoxInstance object = (LoxInstance) getEnvironment().getAt(distance - 1, "this");
     LoxFunction method = superClass.findMethod(superExpr.method().lexeme());
 
     if (method == null) {
@@ -325,7 +369,23 @@ public final class Interpreter {
   // XXX: Ugly hack. Fix this!
   public void resolve(Expr expr, int depth) {
     int key = System.identityHashCode(expr);
-    locals.put(key, depth);
+    getLocals().put(key, depth);
+  }
+
+  private Environment getGlobals() {
+    return currentLoxModule.getGlobals();
+  }
+
+  private Environment getEnvironment() {
+    return currentLoxModule.getEnvironment();
+  }
+
+  private void setEnvironment(Environment environment) {
+    currentLoxModule.setEnvironment(environment);
+  }
+
+  private Map<Integer, Integer> getLocals() {
+    return currentLoxModule.getLocals();
   }
 
   private static boolean isEqual(Object a, Object b) {

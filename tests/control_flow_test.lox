@@ -9,4 +9,4 @@ if (2 < 1) {
 } else {
   a = 3;
 }
-assert(a == 4, "Control flow wrong result!");
+assert(a == 3, "Control flow wrong result!");

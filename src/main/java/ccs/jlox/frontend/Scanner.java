@@ -1,6 +1,7 @@
 package ccs.jlox.frontend;
 
 import static ccs.jlox.ast.TokenType.AND;
+import static ccs.jlox.ast.TokenType.AS;
 import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
 import static ccs.jlox.ast.TokenType.CLASS;
@@ -17,6 +18,7 @@ import static ccs.jlox.ast.TokenType.GREATER;
 import static ccs.jlox.ast.TokenType.GREATER_EQUAL;
 import static ccs.jlox.ast.TokenType.IDENTIFIER;
 import static ccs.jlox.ast.TokenType.IF;
+import static ccs.jlox.ast.TokenType.IMPORT;
 import static ccs.jlox.ast.TokenType.LEFT_BRACE;
 import static ccs.jlox.ast.TokenType.LEFT_PAREN;
 import static ccs.jlox.ast.TokenType.LESS;
@@ -55,12 +57,14 @@ public final class Scanner {
 
   static {
     KEYWORDS.put("and", AND);
+    KEYWORDS.put("as", AS);
     KEYWORDS.put("class", CLASS);
     KEYWORDS.put("else", ELSE);
     KEYWORDS.put("false", FALSE);
     KEYWORDS.put("for", FOR);
     KEYWORDS.put("fun", FUN);
     KEYWORDS.put("if", IF);
+    KEYWORDS.put("import", IMPORT);
     KEYWORDS.put("nil", NIL);
     KEYWORDS.put("or", OR);
     KEYWORDS.put("return", RETURN);

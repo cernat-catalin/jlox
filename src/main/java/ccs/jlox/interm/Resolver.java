@@ -39,6 +39,7 @@ public class Resolver {
       case Stmt.Function functionStmt -> resolveFunctionStmt(functionStmt);
       case Stmt.Class classStmt -> resolveClassStmt(classStmt);
       case Stmt.Block blockStmt -> resolveBlockStmt(blockStmt);
+      case Stmt.Import importStmt -> resolveImportStmt(importStmt);
     }
   }
 
@@ -145,6 +146,8 @@ public class Resolver {
     resolve(blockStmt.statements());
     endScope();
   }
+
+  private void resolveImportStmt(Stmt.Import importStmt) {}
 
   private void resolve(Expr expr) {
     switch (expr) {

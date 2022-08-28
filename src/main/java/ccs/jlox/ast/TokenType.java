@@ -31,12 +31,14 @@ public enum TokenType {
 
   // keywords
   AND,
+  AS,
   CLASS,
   ELSE,
   FALSE,
   FUN,
   FOR,
   IF,
+  IMPORT,
   NIL,
   OR,
   RETURN,

@@ -21,6 +21,14 @@ final class Environment {
     values.put(name, value);
   }
 
+  boolean contains(Token name) {
+    if (values.containsKey(name.lexeme())) {
+      return true;
+    }
+
+    return enclosing != null && enclosing.contains(name);
+  }
+
   void assign(Token name, Object value) {
     if (values.containsKey(name.lexeme())) {
       values.put(name.lexeme(), value);

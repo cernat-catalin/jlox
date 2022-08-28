@@ -5,15 +5,21 @@ import ccs.jlox.backend.Interpreter;
 import ccs.jlox.backend.LoxCallable;
 import java.util.List;
 
-public final class ClockFunction implements LoxCallable, NativeFunction {
+public class SleepFunction implements LoxCallable, NativeFunction {
   @Override
   public int arity() {
-    return 0;
+    return 1;
   }
 
   @Override
   public Object call(Interpreter interpreter, Token callSite, List<Object> arguments) {
-    return System.currentTimeMillis();
+    double millis = (double) arguments.get(0);
+    try {
+      Thread.sleep((long) millis);
+      return null;
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -23,6 +29,6 @@ public final class ClockFunction implements LoxCallable, NativeFunction {
 
   @Override
   public String getName() {
-    return "clock";
+    return "sleep";
   }
 }

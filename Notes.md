@@ -30,6 +30,7 @@
   - error - no `return` in top level code
   - classes + inheritance (invalid uses of inheritance + super)
 - try catch
+- Add arrays
 
 ## Extra added features:
 - Make `print` a native function
