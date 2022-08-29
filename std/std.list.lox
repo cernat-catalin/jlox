@@ -24,7 +24,7 @@ class List {
   remove() {
     if (this.size != 0) {
       this.size = this.size - 1;
-      return this.data[size];
+      return this.data[this.size];
     }
 
     return nil;

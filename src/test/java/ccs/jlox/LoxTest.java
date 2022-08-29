@@ -15,12 +15,25 @@ final class LoxTest {
 
   @Test
   void runTests() throws IOException {
-    ErrorHandler errorHandler = Lox.getErrorHandler();
-    for (File file : getTestFiles()) {
-
-//      if (!file.getName().equals("array_test.lox")) continue;
-
+    LOG.info("Running lang tests...");
+    for (File file : getFilesInDir("tests/lang")) {
+//            if (!file.getName().equals("array_test.lox")) continue;
       LOG.info("Running tests in file: {}", file.getName());
+      runTestFile(file);
+    }
+
+    LOG.info("Running std tests...");
+    for (File file : getFilesInDir("tests/std")) {
+//            if (!file.getName().equals("array_test.lox")) continue;
+      LOG.info("Running tests in file: {}", file.getName());
+      runTestFile(file);
+    }
+  }
+
+  private void runTestFile(File file) throws IOException {
+    ErrorHandler errorHandler = Lox.getErrorHandler();
+
+    try {
       Lox.runSource(Files.readString(file.toPath()));
 
       errorHandler
@@ -36,12 +49,13 @@ final class LoxTest {
       assertThat(errorHandler.hadRuntimeError())
           .overridingErrorMessage(() -> String.format("Runtime error in file %s", file.getName()))
           .isFalse();
+    } finally {
       errorHandler.reset();
     }
   }
 
-  private File[] getTestFiles() {
-    File testDir = new File("tests");
+  private File[] getFilesInDir(String dirPath) {
+    File testDir = new File(dirPath);
     File[] files = testDir.listFiles();
     if (files == null) {
       throw new IllegalStateException("No test files found!");

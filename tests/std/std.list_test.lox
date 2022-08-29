@@ -1,0 +1,21 @@
+import std.list as list;
+
+var l = list.List();
+assert(l.size == 0, "Std List size wrong result!");
+
+l.add(1);
+l.add(2);
+l.add("Hello");
+assert(l.get(0) == 1, "Std List get wrong result!");
+assert(l.get(1) == 2, "Std List get wrong result!");
+assert(l.get(2) == "Hello", "Std List get wrong result!");
+assert(l.size == 3, "Std List size wrong result!");
+
+var last = l.remove();
+assert(last == "Hello", "Std List remove wrong result!");
+assert(l.size == 2, "Std List size wrong result!");
+
+assert(l.remove() == 2, "Std List remove wrong result!");
+assert(l.remove() == 1, "Std List remove wrong result!");
+assert(l.remove() == nil, "Std List remove wrong result!");
+assert(l.size == 0, "Std List size wrong result!");
