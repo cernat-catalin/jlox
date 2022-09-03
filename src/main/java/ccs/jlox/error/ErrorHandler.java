@@ -24,12 +24,12 @@ public final class ErrorHandler {
   public static String errorRepresentation(RuntimeError runtimeError, String filename) {
     return String.format(
         "[file %s] [line %d] Error: %s%n",
-        filename, runtimeError.getToken().line(), runtimeError.getMessage());
+        filename, runtimeError.getLine(), runtimeError.getMessage());
   }
 
   public static String errorRepresentation(RuntimeError runtimeError) {
     return String.format(
-        "[line %d] Error: %s%n", runtimeError.getToken().line(), runtimeError.getMessage());
+        "[line %d] Error: %s%n", runtimeError.getLine(), runtimeError.getMessage());
   }
 
   public void runtimeError(RuntimeError error) {

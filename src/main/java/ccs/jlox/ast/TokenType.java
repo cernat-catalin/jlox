@@ -35,6 +35,7 @@ public enum TokenType {
   AND,
   AS,
   CLASS,
+  DEBUG,
   ELSE,
   FALSE,
   FUN,

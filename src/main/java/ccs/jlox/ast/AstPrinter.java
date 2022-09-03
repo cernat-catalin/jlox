@@ -3,21 +3,22 @@ package ccs.jlox.ast;
 // XXX: This class does not correctly print an AST. Fix it!
 public final class AstPrinter {
   public String print(Expr expr) {
-    return switch (expr) {
-      case Expr.Literal lit -> (lit.value() == null) ? "nil" : lit.value().toString();
-      case Expr.Logical log -> parenthesize(log.operator().lexeme(), log.left(), log.right());
-      case Expr.Unary unary -> parenthesize(unary.operator().lexeme(), unary.right());
-      case Expr.Binary binary -> parenthesize(
-          binary.operator().lexeme(), binary.left(), binary.right());
-      case Expr.Call call -> print(call.callee());
-      case Expr.Get get -> print(get.object());
-      case Expr.This thisExpr -> thisExpr.keyword().toString();
-      case Expr.Grouping grouping -> parenthesize("group", grouping.expr());
-      case Expr.Variable variable -> parenthesize("var", variable);
-      case Expr.Assignment assignment -> parenthesize("assign", assignment);
-      case Expr.Super superExpr -> superExpr.keyword().lexeme();
-      case default -> "Hello";
-    };
+    //    return switch (expr) {
+    //      case Expr.Literal lit -> (lit.value() == null) ? "nil" : lit.value().toString();
+    //      case Expr.Logical log -> parenthesize(log.operator().lexeme(), log.left(), log.right());
+    //      case Expr.Unary unary -> parenthesize(unary.operator().lexeme(), unary.right());
+    //      case Expr.Binary binary -> parenthesize(
+    //          binary.operator().lexeme(), binary.left(), binary.right());
+    //      case Expr.Call call -> print(call.callee());
+    //      case Expr.Get get -> print(get.object());
+    //      case Expr.This thisExpr -> thisExpr.keyword().toString();
+    //      case Expr.Grouping grouping -> parenthesize("group", grouping.expr());
+    //      case Expr.Variable variable -> parenthesize("var", variable);
+    //      case Expr.Assignment assignment -> parenthesize("assign", assignment);
+    //      case Expr.Super superExpr -> superExpr.keyword().lexeme();
+    //      case default -> "Hello";
+    //    };
+    return "";
   }
 
   private String parenthesize(String name, Expr... exprs) {

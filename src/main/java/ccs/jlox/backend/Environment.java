@@ -1,6 +1,5 @@
 package ccs.jlox.backend;
 
-import ccs.jlox.ast.Token;
 import ccs.jlox.error.RuntimeError;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,47 +17,41 @@ final class Environment {
   }
 
   void define(String name, Object value) {
+    // The distance is always zero
+    int distance = 0;
     values.put(name, value);
   }
 
-  boolean contains(Token name) {
-    if (values.containsKey(name.lexeme())) {
-      return true;
-    }
-
-    return enclosing != null && enclosing.contains(name);
-  }
-
-  void assign(Token name, Object value) {
-    if (values.containsKey(name.lexeme())) {
-      values.put(name.lexeme(), value);
+  private void assign(String name, Object value, int line) {
+    if (values.containsKey(name)) {
+      values.put(name, value);
       return;
     }
 
     if (enclosing != null) {
-      enclosing.assign(name, value);
+      enclosing.assign(name, value, line);
       return;
     }
 
-    throw new RuntimeError(name, "Undefined variable '" + name.lexeme() + "'.");
+    throw new RuntimeError(line, "Undefined variable '" + name + "'.");
   }
 
-  void assignAt(int distance, Token name, Object value) {
-    ancestor(distance).values.put(name.lexeme(), value);
+  void assignAt(int distance, String name, Object value, int line) {
+    ancestor(distance).assign(name, value, line);
   }
 
-  Object get(Token name) {
-    if (values.containsKey(name.lexeme())) {
-      return values.get(name.lexeme());
+  private Object get(String name, int line) {
+    if (values.containsKey(name)) {
+      return values.get(name);
     }
 
-    if (enclosing != null) return enclosing.get(name);
+    if (enclosing != null) return enclosing.get(name, line);
 
-    throw new RuntimeError(name, "Undefined variable '" + name.lexeme() + "'.");
+    throw new RuntimeError(line, "Undefined variable '" + name + "'.");
   }
 
-  Object getAt(int distance, String name) {
-    return ancestor(distance).values.get(name);
+  Object getAt(int distance, String name, int line) {
+    return ancestor(distance).get(name, line);
   }
 
   Environment ancestor(int distance) {

@@ -1,19 +1,13 @@
 package ccs.jlox;
 
-import ccs.jlox.ast.Stmt;
-import ccs.jlox.ast.Token;
 import ccs.jlox.backend.Interpreter;
 import ccs.jlox.error.ErrorHandler;
-import ccs.jlox.frontend.Parser;
-import ccs.jlox.frontend.Scanner;
-import ccs.jlox.interm.Resolver;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Map;
 
 public class Lox {
   private static final ErrorHandler ERROR_HANDLER = new ErrorHandler();
@@ -23,18 +17,24 @@ public class Lox {
       System.out.println("Usage: jlox [script]");
       System.exit(64);
     } else if (args.length == 1) {
-      runFile(args[0]);
+      runFile(args[0], true);
     } else {
       runPrompt();
     }
   }
 
-  static void runFile(String path) throws IOException {
+  static void runFile(String path, boolean handleErrors) throws IOException {
     Path filePath = Paths.get(path);
-    runSource(Files.readString(filePath));
-    printFileErrors(filePath.getFileName().toString());
-    if (ERROR_HANDLER.hadCompileError()) System.exit(65);
-    if (ERROR_HANDLER.hadRuntimeError()) System.exit(70);
+
+    Map<String, CompilationUnit> compilationUnits = LoxCompiler.compile(filePath);
+    Interpreter interpreter = new Interpreter(compilationUnits);
+    interpreter.execute("__main__");
+
+    if (handleErrors) {
+      printFileErrors(filePath.getFileName().toString());
+      if (ERROR_HANDLER.hadCompileError()) System.exit(65);
+      if (ERROR_HANDLER.hadRuntimeError()) System.exit(70);
+    }
   }
 
   static void runPrompt() throws IOException {
@@ -51,25 +51,15 @@ public class Lox {
     }
   }
 
-  static void runSource(String source) {
-    Scanner scanner = new Scanner(source);
-    List<Token> tokens = scanner.scanTokens();
-
-    Interpreter interpreter = new Interpreter();
-    Parser parser = new Parser(tokens);
-    List<Stmt> stmts = parser.parse();
-
-    if (ERROR_HANDLER.hadCompileError()) return;
-
-    Resolver resolver = new Resolver(interpreter);
-    resolver.resolve(stmts);
-    if (ERROR_HANDLER.hadCompileError()) return;
-
-    interpreter.execute(stmts);
-  }
-
   public static ErrorHandler getErrorHandler() {
     return ERROR_HANDLER;
+  }
+
+  private static void runSource(String source) throws IOException {
+    Map<String, CompilationUnit> compilationUnits = LoxCompiler.compile(source);
+    if (ERROR_HANDLER.hadCompileError()) return;
+    Interpreter interpreter = new Interpreter(compilationUnits);
+    interpreter.execute("__main__");
   }
 
   // XXX: Kinda ugly. Try and find something else.

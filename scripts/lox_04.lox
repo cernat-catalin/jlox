@@ -1,0 +1,14 @@
+fun bar(z) {
+
+}
+
+fun foo() {
+  var x = 1;
+  var y;
+  print(x);
+  print(y);
+  bar(y);
+  x = x + y;
+}
+
+foo();

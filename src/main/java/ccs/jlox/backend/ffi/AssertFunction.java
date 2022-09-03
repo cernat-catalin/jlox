@@ -18,7 +18,7 @@ public final class AssertFunction implements LoxCallable, NativeFunction {
     String failureMessage = (String) arguments.get(1);
 
     if (!truthValue) {
-      throw new RuntimeError(callSite, failureMessage);
+      throw new RuntimeError(callSite.line(), failureMessage);
     }
 
     return null;

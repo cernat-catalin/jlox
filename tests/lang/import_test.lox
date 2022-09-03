@@ -1,0 +1,19 @@
+import import_helpers.packagex.helperx as hx;
+import import_helpers.packagex.packagey.helpery as hy;
+import import_helpers.packagez.helperz as hz;
+import import_helpers.helper as h;
+
+assert(h.format("hello") == "hello!!", "Project importing wrong result!");
+assert(hx.format_x("hello") == "hello_xxx_z", "Project importing wrong result!");
+assert(hy.format_y("hello") == "hello_yyy_z", "Project importing wrong result!");
+assert(hz.format_z("hello") == "hello_z", "Project importing wrong result!");
+
+
+var _format = h.format;
+var _format_x = hx.format_x;
+var _format_y = hy.format_y;
+var _format_z = hz.format_z;
+assert(_format("hello") == "hello!!", "Project importing wrong result!");
+assert(_format_x("hello") == "hello_xxx_z", "Project importing wrong result!");
+assert(_format_y("hello") == "hello_yyy_z", "Project importing wrong result!");
+assert(_format_z("hello") == "hello_z", "Project importing wrong result!");

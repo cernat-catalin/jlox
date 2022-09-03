@@ -1,0 +1,9 @@
+import import_helpers.packagez.helperz as hz;
+
+fun format_x(msg) {
+  return hz.format_z(msg + _local());
+}
+
+fun _local() {
+  return "_xxx";
+}

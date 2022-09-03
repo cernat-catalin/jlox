@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ccs.jlox.error.ErrorHandler;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,19 +13,24 @@ final class LoxTest {
   private static final Logger LOG = LoggerFactory.getLogger(LoxTest.class);
 
   @Test
-  void runTests() throws IOException {
-    LOG.info("Running lang tests...");
+  void runLangTests() throws IOException {
     for (File file : getFilesInDir("tests/lang")) {
-//            if (!file.getName().equals("array_test.lox")) continue;
-      LOG.info("Running tests in file: {}", file.getName());
-      runTestFile(file);
+      if (file.getName().endsWith("_test.lox")) {
+        //        if (!file.getName().equals("import_test.lox")) continue;
+        LOG.info("Running tests in file: {}", file.getName());
+        runTestFile(file);
+      }
     }
+  }
 
-    LOG.info("Running std tests...");
+  @Test
+  void runStdTests() throws IOException {
     for (File file : getFilesInDir("tests/std")) {
-//            if (!file.getName().equals("array_test.lox")) continue;
-      LOG.info("Running tests in file: {}", file.getName());
-      runTestFile(file);
+      if (file.getName().endsWith("_test.lox")) {
+        //            if (!file.getName().equals("array_test.lox")) continue;
+        LOG.info("Running tests in file: {}", file.getName());
+        runTestFile(file);
+      }
     }
   }
 
@@ -34,7 +38,7 @@ final class LoxTest {
     ErrorHandler errorHandler = Lox.getErrorHandler();
 
     try {
-      Lox.runSource(Files.readString(file.toPath()));
+      Lox.runFile(file.getPath(), false);
 
       errorHandler
           .getCompileErrors()

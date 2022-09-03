@@ -6,6 +6,7 @@ import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
 import static ccs.jlox.ast.TokenType.CLASS;
 import static ccs.jlox.ast.TokenType.COMMA;
+import static ccs.jlox.ast.TokenType.DEBUG;
 import static ccs.jlox.ast.TokenType.DOT;
 import static ccs.jlox.ast.TokenType.ELSE;
 import static ccs.jlox.ast.TokenType.EOF;
@@ -147,6 +148,7 @@ public final class Parser {
     if (match(WHILE)) return whileStatement();
     if (match(LEFT_BRACE)) return blockStatement();
     if (match(IMPORT)) return importStatement();
+    if (match(DEBUG)) return debugStatement();
     return expressionStatement();
   }
 
@@ -244,6 +246,12 @@ public final class Parser {
     consume(SEMICOLON, "Expect ';' after import statement.");
 
     return new Stmt.Import(path, moduleName);
+  }
+
+  private Stmt debugStatement() {
+    Stmt.Debug debug = new Stmt.Debug(previous().line());
+    consume(SEMICOLON, "Expect ';' after value.");
+    return debug;
   }
 
   private Stmt expressionStatement() {
@@ -402,7 +410,8 @@ public final class Parser {
     }
     if (match(LEFT_SQUARE_BRACKET)) {
       Expr size = expression();
-      Token rightBracket = consume(RIGHT_SQUARE_BRACKET, "Expect closing square bracket in array creation.");
+      Token rightBracket =
+          consume(RIGHT_SQUARE_BRACKET, "Expect closing square bracket in array creation.");
       consume(LEFT_BRACE, "Expect opening brace in array creation.");
       consume(RIGHT_BRACE, "Expect closing brace in array creation.");
       return new Expr.ArrayCreation(size, rightBracket);

@@ -20,4 +20,6 @@ public sealed interface Stmt {
   record Block(List<Stmt> statements) implements Stmt {}
 
   record Import(List<Token> path, Token name) implements Stmt {}
+
+  record Debug(int line) implements Stmt {}
 }

@@ -4,29 +4,28 @@ import ccs.jlox.Lox;
 import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Stmt;
 import ccs.jlox.ast.Token;
-import ccs.jlox.backend.Interpreter;
 import ccs.jlox.error.ErrorHandler;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 public class Resolver {
-  private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
 
-  private final Interpreter interpreter;
+  private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
   private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+  private final Map<Integer, Integer> locals = new HashMap<>();
+  private final List<String> imports = new ArrayList<>();
   private FunctionType currentFunction = FunctionType.NONE;
   private ClassType currentClass = ClassType.NONE;
 
-  public Resolver(Interpreter interpreter) {
-    this.interpreter = interpreter;
-  }
-
-  public void resolve(List<Stmt> statements) {
+  public ResolverContext resolve(List<Stmt> statements) {
     for (Stmt statement : statements) {
       resolve(statement);
     }
+    return new ResolverContext(locals, imports);
   }
 
   private void resolve(Stmt stmt) {
@@ -40,6 +39,7 @@ public class Resolver {
       case Stmt.Class classStmt -> resolveClassStmt(classStmt);
       case Stmt.Block blockStmt -> resolveBlockStmt(blockStmt);
       case Stmt.Import importStmt -> resolveImportStmt(importStmt);
+      case Stmt.Debug debugStmt -> resolveDebugStmt(debugStmt);
     }
   }
 
@@ -148,7 +148,13 @@ public class Resolver {
   }
 
   private void resolveImportStmt(Stmt.Import importStmt) {
-    // XXX: Need to do something here ?
+    String fullyQualifiedName =
+        importStmt.path().stream().map(Token::lexeme).collect(Collectors.joining("."));
+    imports.add(fullyQualifiedName);
+  }
+
+  private void resolveDebugStmt(Stmt.Debug debugStmt) {
+    // NO-OP
   }
 
   private void resolve(Expr expr) {
@@ -206,10 +212,15 @@ public class Resolver {
   private void resolveLocal(Expr expr, Token name) {
     for (int i = scopes.size() - 1; i >= 0; i--) {
       if (scopes.get(i).containsKey(name.lexeme())) {
-        interpreter.resolve(expr, scopes.size() - 1 - i);
+        addResolvedExpression(expr, scopes.size() - 1 - i);
         return;
       }
     }
+  }
+
+  private void addResolvedExpression(Expr expr, int depth) {
+    int key = System.identityHashCode(expr);
+    locals.put(key, depth);
   }
 
   private void resolveBinaryExpr(Expr.Binary expr) {
@@ -283,4 +294,7 @@ public class Resolver {
     if (scopes.isEmpty()) return;
     scopes.peek().put(name.lexeme(), true);
   }
+
+  // XXX: Something else
+  public record ResolverContext(Map<Integer, Integer> locals, List<String> imports) {}
 }

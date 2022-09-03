@@ -1,5 +1,6 @@
 package ccs.jlox.backend;
 
+import ccs.jlox.CompilationUnit;
 import ccs.jlox.Lox;
 import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Stmt;
@@ -7,12 +8,6 @@ import ccs.jlox.ast.Token;
 import ccs.jlox.ast.TokenType;
 import ccs.jlox.error.ErrorHandler;
 import ccs.jlox.error.RuntimeError;
-import ccs.jlox.frontend.Parser;
-import ccs.jlox.frontend.Scanner;
-import ccs.jlox.interm.Resolver;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +17,22 @@ import java.util.stream.Collectors;
 public final class Interpreter {
   private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
 
-  private final LoxModule entrypoint = new LoxModule("", List.of());
-  private LoxModule currentLoxModule = entrypoint;
+  private final Map<String, CompilationUnit> compilationUnits;
+  private final Map<String, LoxModule> modules = new HashMap<>();
+  private String currentNamespace = "__main__";
 
-  public Interpreter() {}
+  public Interpreter(Map<String, CompilationUnit> compilationUnits) {
+    this.compilationUnits = compilationUnits;
+    CompilationUnit mainCompilationUnit = compilationUnits.get("__main__");
+    LoxModule mainModule =
+        new LoxModule("__main__", mainCompilationUnit.locals());
+    modules.put("__main__", mainModule);
+  }
 
-  public void execute(List<Stmt> stmts) {
+  public void execute(String namespace) {
+    setCurrentNamespace(namespace);
     try {
-      for (Stmt stmt : stmts) {
+      for (Stmt stmt : compilationUnits.get(currentNamespace).statements()) {
         execute(stmt);
       }
     } catch (RuntimeError error) {
@@ -37,7 +40,7 @@ public final class Interpreter {
     }
   }
 
-  public void execute(Stmt stmt) {
+  private void execute(Stmt stmt) {
     switch (stmt) {
       case Stmt.If ifStmt -> executeIfStmt(ifStmt);
       case Stmt.Return returnStmt -> executeReturnStmt(returnStmt);
@@ -48,6 +51,7 @@ public final class Interpreter {
       case Stmt.Class classStmt -> executeClassStmt(classStmt);
       case Stmt.Block blockStmt -> executeBlockStmt(blockStmt);
       case Stmt.Import importStmt -> executeImportStmt(importStmt);
+      case Stmt.Debug debugStmt -> executeDebugStmt(debugStmt);
     }
   }
 
@@ -80,12 +84,13 @@ public final class Interpreter {
     if (varStmt.initializer() != null) {
       value = evaluate(varStmt.initializer());
     }
-    getEnvironment().define(varStmt.name().lexeme(), value);
+    define(varStmt.name().lexeme(), value);
   }
 
   private void executeFunctionStmt(Stmt.Function functionStmt) {
-    LoxFunction function = new LoxFunction(functionStmt, getEnvironment(), false);
-    getEnvironment().define(functionStmt.name().lexeme(), function);
+    LoxFunction function =
+        new LoxFunction(currentNamespace, functionStmt, getEnvironment(), false);
+    define(functionStmt.name().lexeme(), function);
   }
 
   private void executeClassStmt(Stmt.Class classStmt) {
@@ -93,21 +98,25 @@ public final class Interpreter {
     if (classStmt.superclass() != null) {
       superclass = evaluate(classStmt.superclass());
       if (!(superclass instanceof LoxClass)) {
-        throw new RuntimeError(classStmt.superclass().name(), "Superclass must be a class.");
+        throw new RuntimeError(classStmt.superclass().name().line(), "Superclass must be a class.");
       }
     }
     // XXX: Why two step process (first define class then assign it)?
-    getEnvironment().define(classStmt.name().lexeme(), null);
+    define(classStmt.name().lexeme(), null);
 
     if (classStmt.superclass() != null) {
       setEnvironment(new Environment(getEnvironment()));
-      getEnvironment().define("super", superclass);
+      define("super", superclass);
     }
 
     Map<String, LoxFunction> methods = new HashMap<>();
     for (Stmt.Function method : classStmt.methods()) {
       LoxFunction function =
-          new LoxFunction(method, getEnvironment(), method.name().lexeme().equals("init"));
+          new LoxFunction(
+              currentNamespace,
+              method,
+              getEnvironment(),
+              method.name().lexeme().equals("init"));
       methods.put(method.name().lexeme(), function);
     }
 
@@ -117,7 +126,7 @@ public final class Interpreter {
       setEnvironment(getEnvironment().ancestor(1));
     }
 
-    getEnvironment().assign(classStmt.name(), klass);
+    assignAt(0, classStmt.name().lexeme(), klass, classStmt.name().line());
   }
 
   private void executeBlockStmt(Stmt.Block blockStmt) {
@@ -139,42 +148,36 @@ public final class Interpreter {
 
   // XXX; Very hacky; find a better way
   private void executeImportStmt(Stmt.Import importStmt) {
-    String path = importStmt.path().stream().map(Token::lexeme).collect(Collectors.joining("."));
-    // XXX: Add support for non-std modules
-    try {
-      String source = Files.readString(Path.of("std", path + ".lox"));
-      LoxModule loxModule = loadModule(importStmt.name().lexeme(), importStmt.path(), source);
-      if (loxModule == null) {
-        throw new RuntimeError(importStmt.path().get(0), "Could not parse module.");
-      }
-      getEnvironment().define(loxModule.getName(), loxModule);
-    } catch (IOException e) {
-      throw new RuntimeError(importStmt.path().get(0), "Could not load module.");
+    String fullyQualifiedName =
+        importStmt.path().stream().map(Token::lexeme).collect(Collectors.joining("."));
+    String qualifier = importStmt.name().lexeme();
+
+    // Check if we have already executed the lox module
+    if (modules.containsKey(fullyQualifiedName)) {
+      LoxModule loxModule = modules.get(fullyQualifiedName);
+      define(qualifier, loxModule);
+      return;
+    }
+
+    CompilationUnit compilationUnit = compilationUnits.get(fullyQualifiedName);
+    LoxModule loxModule =
+        new LoxModule(fullyQualifiedName, compilationUnit.locals());
+    modules.put(fullyQualifiedName, loxModule);
+    define(qualifier, loxModule);
+
+    String previousNamespace = currentNamespace;
+    currentNamespace = fullyQualifiedName;
+    execute(fullyQualifiedName);
+    currentNamespace = previousNamespace;
+    if (ERROR_HANDLER.hadCompileError()) {
+      throw new RuntimeError(
+          importStmt.path().get(0).line(),
+          String.format("Could not parse module %s.", fullyQualifiedName));
     }
   }
 
-  private LoxModule loadModule(String moduleName, List<Token> modulePath, String source) {
-    Scanner scanner = new Scanner(source);
-    List<Token> tokens = scanner.scanTokens();
-
-    Parser parser = new Parser(tokens);
-    List<Stmt> stmts = parser.parse();
-
-    if (ERROR_HANDLER.hadCompileError()) return null;
-
-    // XXX: Is this correct?
-    Resolver resolver = new Resolver(this);
-    resolver.resolve(stmts);
-    if (ERROR_HANDLER.hadCompileError()) return null;
-
-    LoxModule newLoxModule = new LoxModule(moduleName, modulePath);
-
-    LoxModule previousModule = currentLoxModule;
-    currentLoxModule = newLoxModule;
-    execute(stmts);
-    currentLoxModule = previousModule;
-
-    return newLoxModule;
+  private void executeDebugStmt(Stmt.Debug debugStmt) {
+    System.out.printf("[DEBUG] Line %d%n", debugStmt.line());
   }
 
   private Object evaluate(Expr expr) {
@@ -217,9 +220,9 @@ public final class Interpreter {
     int key = System.identityHashCode(expr);
     Integer distance = getLocals().get(key);
     if (distance != null) {
-      return getEnvironment().getAt(distance, name.lexeme());
+      return getAt(distance, name.lexeme(), name.line());
     } else {
-      return getGlobals().get(name);
+      return getGlobal(name.lexeme(), name.line());
     }
   }
 
@@ -232,9 +235,9 @@ public final class Interpreter {
 
       Integer distance = getLocals().get(key);
       if (distance != null) {
-        getEnvironment().assignAt(distance, variable.name(), value);
+        assignAt(distance, variable.name().lexeme(), value, variable.name().line());
       } else {
-        getGlobals().assign(variable.name(), value);
+        assignGlobal(variable.name().lexeme(), value, variable.name().line());
       }
       return value;
     } else if (assignmentExpr.variable() instanceof Expr.Get get) {
@@ -256,7 +259,8 @@ public final class Interpreter {
     }
 
     // XXX: Change name of error?
-    throw new RuntimeError(assignmentExpr.equals(), "Invalid left value to assignment operator.");
+    throw new RuntimeError(
+        assignmentExpr.equals().line(), "Invalid left value to assignment operator.");
   }
 
   private Object evaluateUnaryExpr(Expr.Unary unaryExpr) {
@@ -315,7 +319,7 @@ public final class Interpreter {
           yield sLeft + sRight;
         }
         throw new RuntimeError(
-            binaryExpr.operator(), "Operands must be two numbers or two strings.");
+            binaryExpr.operator().line(), "Operands must be two numbers or two strings.");
       }
       default -> new IllegalStateException();
     };
@@ -333,12 +337,12 @@ public final class Interpreter {
     }
 
     if (!(callee instanceof LoxCallable function)) {
-      throw new RuntimeError(callExpr.paren(), "Can only call functions and classes.");
+      throw new RuntimeError(callExpr.paren().line(), "Can only call functions and classes.");
     }
 
     if (arguments.size() != function.arity()) {
       throw new RuntimeError(
-          callExpr.paren(),
+          callExpr.paren().line(),
           "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
     }
 
@@ -351,15 +355,15 @@ public final class Interpreter {
       return loxInstance.get(getExpr.name());
     }
     if (object instanceof LoxModule loxModule) {
-      LoxModule previousModule = currentLoxModule;
-      currentLoxModule = loxModule;
+      String previousNamespace = currentNamespace;
+      currentNamespace = loxModule.getFullyQualifiedName();
       // XXX: This might work for globals (as there is a fallback there when the key is not in the
       // locals)
       Object value = evaluateVariableExpr(new Expr.Variable(getExpr.name()));
-      currentLoxModule = previousModule;
+      currentNamespace = previousNamespace;
       return value;
     }
-    throw new RuntimeError(getExpr.name(), "Only instances or modules have properties.");
+    throw new RuntimeError(getExpr.name().line(), "Only instances or modules have properties.");
   }
 
   private Object evaluateThisExpr(Expr.This thisExpr) {
@@ -367,15 +371,16 @@ public final class Interpreter {
   }
 
   private Object evaluateSuperExpr(Expr.Super superExpr) {
+    // XXX: Ugly hack fix this
     int key = System.identityHashCode(superExpr);
     int distance = getLocals().get(key);
-    LoxClass superClass = (LoxClass) getEnvironment().getAt(distance, "super");
-    LoxInstance object = (LoxInstance) getEnvironment().getAt(distance - 1, "this");
+    LoxClass superClass = (LoxClass) getAt(distance, "super", superExpr.keyword().line());
+    LoxInstance object = (LoxInstance) getAt(distance - 1, "this", -1);
     LoxFunction method = superClass.findMethod(superExpr.method().lexeme());
 
     if (method == null) {
       throw new RuntimeError(
-          superExpr.method(), "Undefined property '" + superExpr.method().lexeme() + "'.");
+          superExpr.method().line(), "Undefined property '" + superExpr.method().lexeme() + "'.");
     }
 
     return method.bind(object);
@@ -388,7 +393,7 @@ public final class Interpreter {
       return new LoxArray(doubleSize.intValue());
     }
 
-    throw new RuntimeError(arrayCExpr.rightBracket(), "Array size must be a number.");
+    throw new RuntimeError(arrayCExpr.rightBracket().line(), "Array size must be a number.");
   }
 
   private Object evaluateArrayIndexExpr(Expr.ArrayIndex arrayIndexExpr) {
@@ -399,32 +404,54 @@ public final class Interpreter {
       if (index instanceof Double doubleIndex) {
         return loxArray.get(doubleIndex.intValue());
       }
-      throw new RuntimeError(arrayIndexExpr.rightParen(), "Cannot index non array object.");
+      throw new RuntimeError(arrayIndexExpr.rightParen().line(), "Cannot index non array object.");
     }
 
-    throw new RuntimeError(arrayIndexExpr.rightParen(), "Cannot index non array object.");
+    throw new RuntimeError(arrayIndexExpr.rightParen().line(), "Cannot index non array object.");
   }
 
-  // XXX: Ugly hack. Fix this!
-  public void resolve(Expr expr, int depth) {
-    int key = System.identityHashCode(expr);
-    getLocals().put(key, depth);
-  }
-
-  private Environment getGlobals() {
-    return currentLoxModule.getGlobals();
+  private LoxModule getCurrentModule() {
+    return modules.get(currentNamespace);
   }
 
   private Environment getEnvironment() {
-    return currentLoxModule.getEnvironment();
+    return getCurrentModule().getEnvironment();
   }
 
   private void setEnvironment(Environment environment) {
-    currentLoxModule.setEnvironment(environment);
+    getCurrentModule().setEnvironment(environment);
   }
 
   private Map<Integer, Integer> getLocals() {
-    return currentLoxModule.getLocals();
+    return getCurrentModule().getLocals();
+  }
+
+  String getCurrentNamespace() {
+    return currentNamespace;
+  }
+
+  void setCurrentNamespace(String namespace) {
+    this.currentNamespace = namespace;
+  }
+
+  private void define(String name, Object value) {
+    getEnvironment().define(name, value);
+  }
+
+  private void assignAt(int distance, String name, Object value, int line) {
+    getEnvironment().assignAt(distance, name, value, line);
+  }
+
+  private Object getAt(int distance, String name, int line) {
+    return getEnvironment().getAt(distance, name, line);
+  }
+
+  private void assignGlobal(String name, Object value, int line) {
+    getCurrentModule().getGlobals().assignAt(0, name, value, line);
+  }
+
+  private Object getGlobal(String name, int line) {
+    return getCurrentModule().getGlobals().getAt(0, name, line);
   }
 
   private static boolean isEqual(Object a, Object b) {
@@ -441,11 +468,11 @@ public final class Interpreter {
 
   private static void checkNumberOperand(Token operator, Object operand) {
     if (operand instanceof Double) return;
-    throw new RuntimeError(operator, "Operand must be a number.");
+    throw new RuntimeError(operator.line(), "Operand must be a number.");
   }
 
   private static void checkNumberOperands(Token operator, Object left, Object right) {
     if (left instanceof Double && right instanceof Double) return;
-    throw new RuntimeError(operator, "Operands must be numbers.");
+    throw new RuntimeError(operator.line(), "Operands must be numbers.");
   }
 }

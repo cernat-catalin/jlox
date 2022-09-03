@@ -1,0 +1,47 @@
+class A {
+  init(y) {
+    this.x = "Hello";
+    this.y = y;
+  }
+
+  foo() {
+    return this.x;
+  }
+
+  bar() {
+    return this.y;
+  }
+}
+
+class B < A {
+  init() {
+    this.x = "Hello World";
+    this.y = 100;
+  }
+
+  foo() {
+    return "New foo";
+  }
+
+  foofoo() {
+    return super.foo() + " Super!";
+  }
+
+  foobar() {
+    return "New method";
+  }
+}
+
+var a = A(10);
+assert(a.x == "Hello", "Class wrong result!");
+assert(a.y == 10, "Class wrong result!");
+assert(a.foo() == "Hello", "Class wrong result!");
+assert(a.bar() == 10, "Class wrong result!");
+
+var b = B();
+assert(b.x == "Hello World", "Class wrong result!");
+assert(b.y == 100, "Class wrong result!");
+assert(b.foo() == "New foo", "Class wrong result!");
+assert(b.bar() == 100, "Class wrong result!");
+assert(b.foofoo() == "Hello World Super!", "Class wrong result!");
+assert(b.foobar() == "New method", "Class wrong result!");

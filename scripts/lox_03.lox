@@ -1,4 +1,14 @@
 import std.list as list;
+import std.math as math;
+
+
+fun fooo(xx, yy) {
+  return xx;
+}
+
+debug;
+
+print(math.max(3, 7));
 
 var l = list.List();
 
@@ -9,3 +19,5 @@ l.add(false);
 for (var i = 0; i < l.size; i = i + 1) {
   print(l.get(i));
 }
+
+print(l.foo(3, 4));

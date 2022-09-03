@@ -1,16 +1,14 @@
 package ccs.jlox.error;
 
-import ccs.jlox.ast.Token;
-
 public class RuntimeError extends RuntimeException {
-  private final transient Token token;
+  private final int line;
 
-  public RuntimeError(Token token, String message) {
+  public RuntimeError(int line, String message) {
     super(message);
-    this.token = token;
+    this.line = line;
   }
 
-  public Token getToken() {
-    return token;
+  public int getLine() {
+    return line;
   }
 }

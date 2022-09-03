@@ -1,28 +1,27 @@
 package ccs.jlox.backend;
 
-import ccs.jlox.ast.Token;
+import ccs.jlox.ast.Stmt;
 import ccs.jlox.backend.ffi.AssertFunction;
 import ccs.jlox.backend.ffi.ClockFunction;
 import ccs.jlox.backend.ffi.NativeFunction;
 import ccs.jlox.backend.ffi.PrintFunction;
 import ccs.jlox.backend.ffi.SleepFunction;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-final class LoxModule {
-  private final String name;
-  // XXX: Keep token or move to <String> ?
-  private final List<Token> path;
-
+// XXX: Move that non interpreter stuff outside (i.e. locals + statements)
+// XXX: Parse every module first
+public final class LoxModule {
+  private final String fullyQualifiedName;
   private final Environment globals = new Environment();
-  private final Map<Integer, Integer> locals = new HashMap<>();
+  private final Map<Integer, Integer> locals;
   private Environment environment = globals;
 
-  LoxModule(String name, List<Token> path) {
-    this.name = name;
-    this.path = path;
+  LoxModule(String fullyQualifiedName, Map<Integer, Integer> locals) {
+    this.fullyQualifiedName = fullyQualifiedName;
+    this.locals = locals;
 
+    // XXX; Find a way to only define them once
     addNativeFunction(new PrintFunction());
     addNativeFunction(new ClockFunction());
     addNativeFunction(new AssertFunction());
@@ -33,8 +32,8 @@ final class LoxModule {
     globals.define(nativeFunction.getName(), nativeFunction);
   }
 
-  String getName() {
-    return name;
+  String getFullyQualifiedName() {
+    return fullyQualifiedName;
   }
 
   Environment getGlobals() {
