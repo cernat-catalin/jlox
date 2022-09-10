@@ -1,57 +1,35 @@
 package ccs.jlox.backend;
 
-import ccs.jlox.error.RuntimeError;
-import java.util.HashMap;
-import java.util.Map;
+import ccs.jlox.interm.VariableLocation;
+import java.util.ArrayList;
+import java.util.List;
 
 final class Environment {
   private final Environment enclosing;
-  private final Map<String, Object> values = new HashMap<>();
-
-  Environment() {
-    this.enclosing = null;
-  }
+  private final List<Object> values = new ArrayList<>();
 
   Environment(Environment enclosing) {
     this.enclosing = enclosing;
   }
 
-  void define(String name, Object value) {
-    // The distance is always zero
-    int distance = 0;
-    values.put(name, value);
+  void define(Object value) {
+    values.add(value);
   }
 
-  private void assign(String name, Object value, int line) {
-    if (values.containsKey(name)) {
-      values.put(name, value);
-      return;
-    }
-
-    if (enclosing != null) {
-      enclosing.assign(name, value, line);
-      return;
-    }
-
-    throw new RuntimeError(line, "Undefined variable '" + name + "'.");
+  private void assign(int slot, Object value) {
+    values.set(slot, value);
   }
 
-  void assignAt(int distance, String name, Object value, int line) {
-    ancestor(distance).assign(name, value, line);
+  void assignAt(VariableLocation variableLocation, Object value) {
+    ancestor(variableLocation.depth()).assign(variableLocation.slot(), value);
   }
 
-  private Object get(String name, int line) {
-    if (values.containsKey(name)) {
-      return values.get(name);
-    }
-
-    if (enclosing != null) return enclosing.get(name, line);
-
-    throw new RuntimeError(line, "Undefined variable '" + name + "'.");
+  private Object get(int slot) {
+    return values.get(slot);
   }
 
-  Object getAt(int distance, String name, int line) {
-    return ancestor(distance).get(name, line);
+  Object getAt(VariableLocation variableLocation) {
+    return ancestor(variableLocation.depth()).get(variableLocation.slot());
   }
 
   Environment ancestor(int distance) {

@@ -1,5 +1,9 @@
 package ccs.jlox.interm;
 
+import static ccs.jlox.interm.VariableState.DECLARED;
+import static ccs.jlox.interm.VariableState.DEFINED;
+import static ccs.jlox.interm.VariableState.UNDECLARED;
+
 import ccs.jlox.Lox;
 import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Stmt;
@@ -9,23 +13,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class Resolver {
-
   private static final ErrorHandler ERROR_HANDLER = Lox.getErrorHandler();
-  private final Stack<Map<String, Boolean>> scopes = new Stack<>();
-  private final Map<Integer, Integer> locals = new HashMap<>();
+
+  private final Stack<Map<String, VarStateSlot>> scopes = new Stack<>();
+  private final Map<Integer, VariableLocation> locals = new HashMap<>();
   private final List<String> imports = new ArrayList<>();
   private FunctionType currentFunction = FunctionType.NONE;
   private ClassType currentClass = ClassType.NONE;
 
   public ResolverContext resolve(List<Stmt> statements) {
+    _resolve(statements);
+    return new ResolverContext(locals, imports);
+  }
+
+  private void _resolve(List<Stmt> statements) {
     for (Stmt statement : statements) {
       resolve(statement);
     }
-    return new ResolverContext(locals, imports);
   }
 
   private void resolve(Stmt stmt) {
@@ -97,11 +106,13 @@ public class Resolver {
 
     if (stmt.superclass() != null) {
       beginScope();
-      scopes.peek().put("super", true);
+      // XXX: Or is it initialized here?
+      define("super");
     }
 
     beginScope();
-    scopes.peek().put("this", true);
+    // XXX: Or is it initialized here?
+    define("this");
 
     for (Stmt.Function method : stmt.methods()) {
       FunctionType declaration = FunctionType.METHOD;
@@ -135,7 +146,7 @@ public class Resolver {
       declare(param);
       define(param);
     }
-    resolve(function.body());
+    _resolve(function.body());
     endScope();
 
     currentFunction = enclosingFunction;
@@ -143,14 +154,16 @@ public class Resolver {
 
   private void resolveBlockStmt(Stmt.Block blockStmt) {
     beginScope();
-    resolve(blockStmt.statements());
+    _resolve(blockStmt.statements());
     endScope();
   }
 
   private void resolveImportStmt(Stmt.Import importStmt) {
+    String qualifier = importStmt.name().lexeme();
     String fullyQualifiedName =
         importStmt.path().stream().map(Token::lexeme).collect(Collectors.joining("."));
     imports.add(fullyQualifiedName);
+    define(qualifier);
   }
 
   private void resolveDebugStmt(Stmt.Debug debugStmt) {
@@ -185,8 +198,14 @@ public class Resolver {
   }
 
   private void resolveVarExpr(Expr.Variable expr) {
-    if (!scopes.isEmpty() && scopes.peek().get(expr.name().lexeme()) == Boolean.FALSE) {
-      ERROR_HANDLER.error(expr.name(), "Can't read local variable in its own initializer.");
+    if (!scopes.empty()) {
+      VariableState variableState =
+          Optional.ofNullable(scopes.peek().get(expr.name().lexeme()))
+              .map(VarStateSlot::state)
+              .orElse(UNDECLARED);
+      if (variableState == DECLARED) {
+        ERROR_HANDLER.error(expr.name(), "Can't read local variable in its own initializer.");
+      }
     }
     resolveLocal(expr, expr.name());
   }
@@ -211,16 +230,18 @@ public class Resolver {
 
   private void resolveLocal(Expr expr, Token name) {
     for (int i = scopes.size() - 1; i >= 0; i--) {
+      // XXX: We should be able to only access the key once
       if (scopes.get(i).containsKey(name.lexeme())) {
-        addResolvedExpression(expr, scopes.size() - 1 - i);
+        int slot = scopes.get(i).get(name.lexeme()).slot;
+        addResolvedExpression(expr, scopes.size() - 1 - i, slot);
         return;
       }
     }
   }
 
-  private void addResolvedExpression(Expr expr, int depth) {
+  private void addResolvedExpression(Expr expr, int depth, int slot) {
     int key = System.identityHashCode(expr);
-    locals.put(key, depth);
+    locals.put(key, new VariableLocation(depth, slot));
   }
 
   private void resolveBinaryExpr(Expr.Binary expr) {
@@ -281,20 +302,32 @@ public class Resolver {
 
   private void declare(Token name) {
     if (scopes.isEmpty()) return;
-    Map<String, Boolean> scope = scopes.peek();
+    var scope = scopes.peek();
 
     if (scope.containsKey(name.lexeme())) {
       ERROR_HANDLER.error(name, "Already variable with this name in this scope.");
     }
 
-    scope.put(name.lexeme(), false);
+    int nextSlot = scope.size();
+    scope.put(name.lexeme(), new VarStateSlot(DECLARED, nextSlot));
   }
 
   private void define(Token name) {
+    define(name.lexeme());
+  }
+
+  private void define(String lexeme) {
     if (scopes.isEmpty()) return;
-    scopes.peek().put(name.lexeme(), true);
+    var scope = scopes.peek();
+    int nextSlot = scope.size();
+    scope.merge(
+        lexeme,
+        new VarStateSlot(DEFINED, nextSlot),
+        (old, __) -> new VarStateSlot(DEFINED, old.slot()));
   }
 
   // XXX: Something else
-  public record ResolverContext(Map<Integer, Integer> locals, List<String> imports) {}
+  public record ResolverContext(Map<Integer, VariableLocation> locals, List<String> imports) {}
+
+  private record VarStateSlot(VariableState state, int slot) {}
 }

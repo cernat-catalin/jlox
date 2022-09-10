@@ -21,3 +21,11 @@ for (var i = 0; i < l.size; i = i + 1) {
 }
 
 print(l.foo(3, 4));
+
+
+
+{
+ var xx = 12;
+ var yy = 11;
+ print(yy);
+}

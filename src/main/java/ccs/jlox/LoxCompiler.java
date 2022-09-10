@@ -6,6 +6,7 @@ import ccs.jlox.error.ErrorHandler;
 import ccs.jlox.frontend.Parser;
 import ccs.jlox.frontend.Scanner;
 import ccs.jlox.interm.Resolver;
+import ccs.jlox.interm.VariableLocation;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -97,5 +98,5 @@ public final class LoxCompiler {
     String loadSource(String fullyQualifiedName) throws IOException;
   }
 
-  record SingleFileOutput(List<Stmt> stmts, Map<Integer, Integer> locals, List<String> imports) {}
+  record SingleFileOutput(List<Stmt> stmts, Map<Integer, VariableLocation> locals, List<String> imports) {}
 }

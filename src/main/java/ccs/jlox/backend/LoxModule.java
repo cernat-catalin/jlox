@@ -1,23 +1,22 @@
 package ccs.jlox.backend;
 
-import ccs.jlox.ast.Stmt;
 import ccs.jlox.backend.ffi.AssertFunction;
 import ccs.jlox.backend.ffi.ClockFunction;
 import ccs.jlox.backend.ffi.NativeFunction;
 import ccs.jlox.backend.ffi.PrintFunction;
 import ccs.jlox.backend.ffi.SleepFunction;
-import java.util.List;
+import ccs.jlox.interm.VariableLocation;
+import java.util.HashMap;
 import java.util.Map;
 
-// XXX: Move that non interpreter stuff outside (i.e. locals + statements)
-// XXX: Parse every module first
+// XXX: Should locals live here?
 public final class LoxModule {
   private final String fullyQualifiedName;
-  private final Environment globals = new Environment();
-  private final Map<Integer, Integer> locals;
-  private Environment environment = globals;
+  private final Map<Integer, VariableLocation> locals;
+  // XXX: Change to more efficient implementation. See notes
+  private final Map<String, Object> globals = new HashMap<>();
 
-  LoxModule(String fullyQualifiedName, Map<Integer, Integer> locals) {
+  LoxModule(String fullyQualifiedName, Map<Integer, VariableLocation> locals) {
     this.fullyQualifiedName = fullyQualifiedName;
     this.locals = locals;
 
@@ -29,26 +28,18 @@ public final class LoxModule {
   }
 
   private void addNativeFunction(NativeFunction nativeFunction) {
-    globals.define(nativeFunction.getName(), nativeFunction);
+    globals.put(nativeFunction.getName(), nativeFunction);
   }
 
   String getFullyQualifiedName() {
     return fullyQualifiedName;
   }
 
-  Environment getGlobals() {
+  Map<String, Object> getGlobals() {
     return globals;
   }
 
-  Environment getEnvironment() {
-    return environment;
-  }
-
-  void setEnvironment(Environment environment) {
-    this.environment = environment;
-  }
-
-  Map<Integer, Integer> getLocals() {
+  Map<Integer, VariableLocation> getLocals() {
     return locals;
   }
 }

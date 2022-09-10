@@ -8,6 +8,7 @@ import ccs.jlox.ast.Token;
 import ccs.jlox.ast.TokenType;
 import ccs.jlox.error.ErrorHandler;
 import ccs.jlox.error.RuntimeError;
+import ccs.jlox.interm.VariableLocation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,12 +21,12 @@ public final class Interpreter {
   private final Map<String, CompilationUnit> compilationUnits;
   private final Map<String, LoxModule> modules = new HashMap<>();
   private String currentNamespace = "__main__";
+  private Environment currentEnvironment;
 
   public Interpreter(Map<String, CompilationUnit> compilationUnits) {
     this.compilationUnits = compilationUnits;
     CompilationUnit mainCompilationUnit = compilationUnits.get("__main__");
-    LoxModule mainModule =
-        new LoxModule("__main__", mainCompilationUnit.locals());
+    LoxModule mainModule = new LoxModule("__main__", mainCompilationUnit.locals());
     modules.put("__main__", mainModule);
   }
 
@@ -88,8 +89,7 @@ public final class Interpreter {
   }
 
   private void executeFunctionStmt(Stmt.Function functionStmt) {
-    LoxFunction function =
-        new LoxFunction(currentNamespace, functionStmt, getEnvironment(), false);
+    LoxFunction function = new LoxFunction(currentNamespace, functionStmt, getEnvironment(), false);
     define(functionStmt.name().lexeme(), function);
   }
 
@@ -113,10 +113,7 @@ public final class Interpreter {
     for (Stmt.Function method : classStmt.methods()) {
       LoxFunction function =
           new LoxFunction(
-              currentNamespace,
-              method,
-              getEnvironment(),
-              method.name().lexeme().equals("init"));
+              currentNamespace, method, getEnvironment(), method.name().lexeme().equals("init"));
       methods.put(method.name().lexeme(), function);
     }
 
@@ -126,7 +123,7 @@ public final class Interpreter {
       setEnvironment(getEnvironment().ancestor(1));
     }
 
-    assignAt(0, classStmt.name().lexeme(), klass, classStmt.name().line());
+    define(classStmt.name().lexeme(), klass);
   }
 
   private void executeBlockStmt(Stmt.Block blockStmt) {
@@ -155,15 +152,14 @@ public final class Interpreter {
     // Check if we have already executed the lox module
     if (modules.containsKey(fullyQualifiedName)) {
       LoxModule loxModule = modules.get(fullyQualifiedName);
-      define(qualifier, loxModule);
+      defineGlobal(qualifier, loxModule);
       return;
     }
 
     CompilationUnit compilationUnit = compilationUnits.get(fullyQualifiedName);
-    LoxModule loxModule =
-        new LoxModule(fullyQualifiedName, compilationUnit.locals());
+    LoxModule loxModule = new LoxModule(fullyQualifiedName, compilationUnit.locals());
     modules.put(fullyQualifiedName, loxModule);
-    define(qualifier, loxModule);
+    defineGlobal(qualifier, loxModule);
 
     String previousNamespace = currentNamespace;
     currentNamespace = fullyQualifiedName;
@@ -218,9 +214,9 @@ public final class Interpreter {
 
   private Object lookUpVariable(Token name, Expr expr) {
     int key = System.identityHashCode(expr);
-    Integer distance = getLocals().get(key);
-    if (distance != null) {
-      return getAt(distance, name.lexeme(), name.line());
+    VariableLocation varLocation = getLocals().get(key);
+    if (varLocation != null) {
+      return getAt(varLocation);
     } else {
       return getGlobal(name.lexeme(), name.line());
     }
@@ -233,9 +229,9 @@ public final class Interpreter {
     if (assignmentExpr.variable() instanceof Expr.Variable variable) {
       int key = System.identityHashCode(assignmentExpr);
 
-      Integer distance = getLocals().get(key);
-      if (distance != null) {
-        assignAt(distance, variable.name().lexeme(), value, variable.name().line());
+      VariableLocation varLocation = getLocals().get(key);
+      if (varLocation != null) {
+        assignAt(varLocation, value);
       } else {
         assignGlobal(variable.name().lexeme(), value, variable.name().line());
       }
@@ -373,9 +369,11 @@ public final class Interpreter {
   private Object evaluateSuperExpr(Expr.Super superExpr) {
     // XXX: Ugly hack fix this
     int key = System.identityHashCode(superExpr);
-    int distance = getLocals().get(key);
-    LoxClass superClass = (LoxClass) getAt(distance, "super", superExpr.keyword().line());
-    LoxInstance object = (LoxInstance) getAt(distance - 1, "this", -1);
+    VariableLocation varLocation = getLocals().get(key);
+    LoxClass superClass = (LoxClass) getAt(varLocation);
+    // XXX: Hacky. We know from the resolver that "this" is defined
+    // one scope closer and on the first slot.
+    LoxInstance object = (LoxInstance) getAt(new VariableLocation(varLocation.depth() - 1, 0));
     LoxFunction method = superClass.findMethod(superExpr.method().lexeme());
 
     if (method == null) {
@@ -415,14 +413,14 @@ public final class Interpreter {
   }
 
   private Environment getEnvironment() {
-    return getCurrentModule().getEnvironment();
+    return currentEnvironment;
   }
 
   private void setEnvironment(Environment environment) {
-    getCurrentModule().setEnvironment(environment);
+    currentEnvironment = environment;
   }
 
-  private Map<Integer, Integer> getLocals() {
+  private Map<Integer, VariableLocation> getLocals() {
     return getCurrentModule().getLocals();
   }
 
@@ -435,23 +433,38 @@ public final class Interpreter {
   }
 
   private void define(String name, Object value) {
-    getEnvironment().define(name, value);
+    if (getEnvironment() == null) {
+      defineGlobal(name, value);
+    } else {
+      getEnvironment().define(value);
+    }
   }
 
-  private void assignAt(int distance, String name, Object value, int line) {
-    getEnvironment().assignAt(distance, name, value, line);
+  private void assignAt(VariableLocation variableLocation, Object value) {
+    getEnvironment().assignAt(variableLocation, value);
   }
 
-  private Object getAt(int distance, String name, int line) {
-    return getEnvironment().getAt(distance, name, line);
+  private Object getAt(VariableLocation variableLocation) {
+    return getEnvironment().getAt(variableLocation);
+  }
+
+  private void defineGlobal(String name, Object value) {
+    getCurrentModule().getGlobals().put(name, value);
   }
 
   private void assignGlobal(String name, Object value, int line) {
-    getCurrentModule().getGlobals().assignAt(0, name, value, line);
+    if (getCurrentModule().getGlobals().containsKey(name)) {
+      getCurrentModule().getGlobals().put(name, value);
+    } else {
+      throw new RuntimeError(line, "Undefined variable '" + name + "'.");
+    }
   }
 
   private Object getGlobal(String name, int line) {
-    return getCurrentModule().getGlobals().getAt(0, name, line);
+    if (getCurrentModule().getGlobals().containsKey(name)) {
+      return getCurrentModule().getGlobals().get(name);
+    }
+    throw new RuntimeError(line, "Undefined variable '" + name + "'.");
   }
 
   private static boolean isEqual(Object a, Object b) {

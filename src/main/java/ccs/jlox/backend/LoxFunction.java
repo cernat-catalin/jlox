@@ -2,6 +2,7 @@ package ccs.jlox.backend;
 
 import ccs.jlox.ast.Stmt;
 import ccs.jlox.ast.Token;
+import ccs.jlox.interm.VariableLocation;
 import java.util.List;
 
 final class LoxFunction implements LoxCallable {
@@ -22,7 +23,7 @@ final class LoxFunction implements LoxCallable {
   public Object call(Interpreter interpreter, Token callSite, List<Object> arguments) {
     Environment environment = new Environment(closure);
     for (int i = 0; i < declaration.params().size(); i++) {
-      environment.define(declaration.params().get(i).lexeme(), arguments.get(i));
+      environment.define(arguments.get(i));
     }
     String previousNamespace = interpreter.getCurrentNamespace();
     try {
@@ -30,20 +31,23 @@ final class LoxFunction implements LoxCallable {
       interpreter.executeBlock(declaration.body(), environment);
     } catch (Return returnValue) {
       if (isInitializer) {
-        return closure.getAt(0, "this", declaration.name().line());
+        // XXX: Hacky. We know that this was the first thing defined in the closure environment
+        return closure.getAt(new VariableLocation(0, 0));
       }
       return returnValue.getValue();
     } finally {
       interpreter.setCurrentNamespace(previousNamespace);
     }
 
-    if (isInitializer) return closure.getAt(0, "this", declaration.name().line());
+    // XXX: Hacky. We know that this was the first thing defined in the closure environment
+    if (isInitializer) return closure.getAt(new VariableLocation(0, 0));
     return null;
   }
 
   LoxFunction bind(LoxInstance instance) {
     Environment environment = new Environment(closure);
-    environment.define("this", instance);
+    // Define "this"
+    environment.define(instance);
     return new LoxFunction(namespace, declaration, environment, isInitializer);
   }
 

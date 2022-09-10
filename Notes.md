@@ -11,6 +11,8 @@
 - Add support for anonymous functions
 - Make resolver report if a local variable is never used
 - Make resolver more efficient. See challenge 4 in chapter 11 for more details
+  - [DONE] Use indexes when resolving local variables instead of a map
+  - [ ] Accessing globals by index (see notes below)
 - Add support for static class methods. See Smalltalk and Ruby "metaclasses" (make LoxClass extend LoxInstance)
 - Add support for _getter_ methods (they look like a field but actually compute the value on demand; see book)
 - Add support for traits
@@ -37,3 +39,7 @@
 ## Extra added features:
 - Make `print` a native function
 - Add `assert` native function
+
+### Accessing globals by index
+- We would need to add a linking step that passes information from the imported compilation unit to the one that imports.
+Otherwise, there is no way to know in unit A in what position in the global array variable x is in unit B.
