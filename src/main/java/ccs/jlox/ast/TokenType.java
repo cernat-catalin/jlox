@@ -36,6 +36,7 @@ public enum TokenType {
   // keywords
   AND,
   AS,
+  BREAK,
   CLASS,
   DEBUG,
   ELSE,

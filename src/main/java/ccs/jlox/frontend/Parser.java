@@ -4,6 +4,7 @@ import static ccs.jlox.ast.TokenType.AND;
 import static ccs.jlox.ast.TokenType.AS;
 import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
+import static ccs.jlox.ast.TokenType.BREAK;
 import static ccs.jlox.ast.TokenType.CLASS;
 import static ccs.jlox.ast.TokenType.COLON;
 import static ccs.jlox.ast.TokenType.COMMA;
@@ -151,6 +152,7 @@ public final class Parser {
     if (match(LEFT_BRACE)) return blockStatement();
     if (match(IMPORT)) return importStatement();
     if (match(DEBUG)) return debugStatement();
+    if (match(BREAK)) return breakStatement();
     return expressionStatement();
   }
 
@@ -254,6 +256,12 @@ public final class Parser {
     Stmt.Debug debug = new Stmt.Debug(previous().line());
     consume(SEMICOLON, "Expect ';' after value.");
     return debug;
+  }
+
+  private Stmt breakStatement() {
+    Stmt.Break breakStmt = new Stmt.Break(previous().line());
+    consume(SEMICOLON, "Expect ';' after break statement.");
+    return breakStmt;
   }
 
   private Stmt expressionStatement() {

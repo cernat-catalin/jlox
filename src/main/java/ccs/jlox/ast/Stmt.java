@@ -22,4 +22,6 @@ public sealed interface Stmt {
   record Import(List<Token> path, Token name) implements Stmt {}
 
   record Debug(int line) implements Stmt {}
+
+  record Break(int line) implements Stmt {}
 }

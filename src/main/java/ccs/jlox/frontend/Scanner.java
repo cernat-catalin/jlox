@@ -4,6 +4,7 @@ import static ccs.jlox.ast.TokenType.AND;
 import static ccs.jlox.ast.TokenType.AS;
 import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
+import static ccs.jlox.ast.TokenType.BREAK;
 import static ccs.jlox.ast.TokenType.CLASS;
 import static ccs.jlox.ast.TokenType.COLON;
 import static ccs.jlox.ast.TokenType.COMMA;
@@ -63,6 +64,7 @@ public final class Scanner {
   static {
     KEYWORDS.put("and", AND);
     KEYWORDS.put("as", AS);
+    KEYWORDS.put("break", BREAK);
     KEYWORDS.put("class", CLASS);
     KEYWORDS.put("debug", DEBUG);
     KEYWORDS.put("else", ELSE);

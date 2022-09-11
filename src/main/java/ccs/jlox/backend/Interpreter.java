@@ -53,6 +53,7 @@ public final class Interpreter {
       case Stmt.Block blockStmt -> executeBlockStmt(blockStmt);
       case Stmt.Import importStmt -> executeImportStmt(importStmt);
       case Stmt.Debug debugStmt -> executeDebugStmt(debugStmt);
+      case Stmt.Break breakStmt -> executeBreakStmt(breakStmt);
     }
   }
 
@@ -71,8 +72,12 @@ public final class Interpreter {
   }
 
   private void executeWhileStmt(Stmt.While whileStmt) {
-    while (isTruthy(evaluate(whileStmt.condition()))) {
-      execute(whileStmt.body());
+    try {
+      while (isTruthy(evaluate(whileStmt.condition()))) {
+        execute(whileStmt.body());
+      }
+    } catch (Break breakEx) {
+      // NO-OP
     }
   }
 
@@ -174,6 +179,10 @@ public final class Interpreter {
 
   private void executeDebugStmt(Stmt.Debug debugStmt) {
     System.out.printf("[DEBUG] Line %d%n", debugStmt.line());
+  }
+
+  private void executeBreakStmt(Stmt.Break breakStmt) {
+    throw new Break();
   }
 
   private Object evaluate(Expr expr) {

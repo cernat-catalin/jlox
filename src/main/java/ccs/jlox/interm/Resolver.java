@@ -49,6 +49,7 @@ public class Resolver {
       case Stmt.Block blockStmt -> resolveBlockStmt(blockStmt);
       case Stmt.Import importStmt -> resolveImportStmt(importStmt);
       case Stmt.Debug debugStmt -> resolveDebugStmt(debugStmt);
+      case Stmt.Break breakStmt -> resolveBreakStmt(breakStmt);
     }
   }
 
@@ -167,6 +168,10 @@ public class Resolver {
   }
 
   private void resolveDebugStmt(Stmt.Debug debugStmt) {
+    // NO-OP
+  }
+
+  private void resolveBreakStmt(Stmt.Break breakStmt) {
     // NO-OP
   }
 

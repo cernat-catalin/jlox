@@ -30,6 +30,8 @@ statement       -> exprStmt
                  | whileStmt
                  | block
                  | importStmt
+                 | debugStmt
+                 | breakStmt
 exprStmt        -> expression ";"
 forStmt         -> "for" "(" (varDecl | exprStmt | ";")
                    expression? ";"
@@ -40,6 +42,8 @@ returnStmt      -> "return" expression? ";"
 whileStmt       -> "while" "(" expression ")" statement
 block           -> "{" declaration* "}"
 importStmt      -> "import" (IDENTIFIER "."?)*
+debugStmt       -> "debug" ";"
+breakStmt       -> "break" ";"
 
 expression      -> assignment
 assignment      -> (call ".")? IDENTIFIER "=" assignment
