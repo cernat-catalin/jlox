@@ -1,5 +1,5 @@
 ## From book
-- Add support for C-style `/* ... */` block comments.
+- [DONE] Add support for C-style `/* ... */` block comments.
 - Add support for C-style comma expressions (comma operator in expressions).
 - [DONE] Add support for C-style ternary operator.
 - Add error production rules to handle each binary operator without a left-hand operator.
@@ -23,8 +23,7 @@
 - Maybe don't make assignment an expression but rather a statement?
 - Maybe have `final` by default and introduce a `mut`?
 - Add support for `forEach` style for loops
-- Add `+=` and friends operator
-- Add `++` and operator
+- [DONE] Add `+=` and friends operator
 - Make Lox statically typed
   - Check function arity at compile time
   - Should not be possible to _use_ variables/functions that are not declared

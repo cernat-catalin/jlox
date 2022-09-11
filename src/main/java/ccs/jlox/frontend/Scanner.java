@@ -147,8 +147,10 @@ public final class Scanner {
   private void handleSlash() {
     if (match('/')) {
       comment();
+    } else if (match('*')) {
+      multiLineComment();
     } else {
-      addToken(match('=') ? SLASH_EQUAL: SLASH);
+      addToken(match('=') ? SLASH_EQUAL : SLASH);
     }
   }
 
@@ -171,6 +173,19 @@ public final class Scanner {
 
   private void comment() {
     while (peek() != '\n' && !isAtEnd()) advance();
+  }
+
+  private void multiLineComment() {
+    boolean done = false;
+    while (!done && !isAtEnd()) {
+      while (peek() != '*' && !isAtEnd()) advance();
+
+      if (!isAtEnd()) advance();
+      if (peek() == '/') {
+        done = true;
+        advance();
+      }
+    }
   }
 
   private void string() {

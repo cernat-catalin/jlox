@@ -1,0 +1,14 @@
+// Hi!
+var x = 10;
+// hello there
+
+assert(x == 10, "Comments wrong results");
+
+x = 12; // WOW
+assert(x == 12, "Comments wrong results");
+/*
+    Some multi
+    line
+    comment
+*/
+assert(x == 12, "Comments wrong results");
