@@ -28,10 +28,12 @@ import static ccs.jlox.ast.TokenType.LEFT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.LESS;
 import static ccs.jlox.ast.TokenType.LESS_EQUAL;
 import static ccs.jlox.ast.TokenType.MINUS;
+import static ccs.jlox.ast.TokenType.MINUS_EQUAL;
 import static ccs.jlox.ast.TokenType.NIL;
 import static ccs.jlox.ast.TokenType.NUMBER;
 import static ccs.jlox.ast.TokenType.OR;
 import static ccs.jlox.ast.TokenType.PLUS;
+import static ccs.jlox.ast.TokenType.PLUS_EQUAL;
 import static ccs.jlox.ast.TokenType.QUESTION_MARK;
 import static ccs.jlox.ast.TokenType.RETURN;
 import static ccs.jlox.ast.TokenType.RIGHT_BRACE;
@@ -39,7 +41,9 @@ import static ccs.jlox.ast.TokenType.RIGHT_PAREN;
 import static ccs.jlox.ast.TokenType.RIGHT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.SEMICOLON;
 import static ccs.jlox.ast.TokenType.SLASH;
+import static ccs.jlox.ast.TokenType.SLASH_EQUAL;
 import static ccs.jlox.ast.TokenType.STAR;
+import static ccs.jlox.ast.TokenType.STAR_EQUAL;
 import static ccs.jlox.ast.TokenType.STRING;
 import static ccs.jlox.ast.TokenType.SUPER;
 import static ccs.jlox.ast.TokenType.THIS;
@@ -275,7 +279,7 @@ public final class Parser {
   }
 
   private Expr assignment() {
-    Expr expr = ternary();
+    Expr expr = assignmentAndOperation();
 
     // XXX: simplify
     if (match(EQUAL)) {
@@ -292,6 +296,43 @@ public final class Parser {
     }
 
     return expr;
+  }
+
+  private Expr assignmentAndOperation() {
+    Expr expr = ternary();
+
+    while (match(PLUS_EQUAL, MINUS_EQUAL, STAR_EQUAL, SLASH_EQUAL)) {
+      // XXX: Maybe we should have a binary operation type instead of relying on the token
+      Token operator = previous();
+      TokenType singleType =
+          switch (operator.type()) {
+            case PLUS_EQUAL -> PLUS;
+            case MINUS_EQUAL -> MINUS;
+            case STAR_EQUAL -> STAR;
+            case SLASH_EQUAL -> SLASH;
+            default -> throw error(peek(), "Invalid expression.");
+          };
+      Token singleOperator =
+          new Token(singleType, operator.lexeme().substring(0, 1), null, operator.line());
+
+      Expr right = ternary();
+      Expr newValue = new Expr.Binary(expr, singleOperator, right);
+      expr = new Expr.Assignment(expr, operator, newValue);
+    }
+
+    //    while (match(OR)) {
+    //      Token operator = previous();
+    //      Expr right = and();
+    //      expr = new Expr.Logical(expr, operator, right);
+    //    }
+    return expr;
+
+    //    if (match(BANG, MINUS)) {
+    //      Token operator = previous();
+    //      Expr right = unary();
+    //      return new Expr.Unary(operator, right);
+    //    }
+    //    return call();
   }
 
   private Expr ternary() {

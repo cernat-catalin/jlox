@@ -10,57 +10,58 @@
 # so that we can avoid: `if (condition) var a = 12;`
 
 
-program         -> declaration* EOF
+program           -> declaration* EOF
 
-declaration     -> classDecl
-                 | funDecl
-                 | varDecl
-                 | statement;
-classDecl       -> "class" IDENTIFIER ("<" IDENTIFIER)
-                   "{" function* "}"
-funDecl         -> "fun" function
-function        -> IDENTIFIER "(" parameters? ")" block
-parameters      -> IDENTIFIER ("," IDENTIFIER)*
-varDecl         -> "var" IDENTIFIER ("=" expression)? ";"
+declaration       -> classDecl
+                   | funDecl
+                   | varDecl
+                   | statement;
+classDecl         -> "class" IDENTIFIER ("<" IDENTIFIER)
+                     "{" function* "}"
+funDecl           -> "fun" function
+function          -> IDENTIFIER "(" parameters? ")" block
+parameters        -> IDENTIFIER ("," IDENTIFIER)*
+varDecl           -> "var" IDENTIFIER ("=" expression)? ";"
 
-statement       -> exprStmt
-                 | forStmt
-                 | ifStmt
-                 | returnStmt
-                 | whileStmt
-                 | block
-                 | importStmt
-                 | debugStmt
-                 | breakStmt
-exprStmt        -> expression ";"
-forStmt         -> "for" "(" (varDecl | exprStmt | ";")
+statement         -> exprStmt
+                   | forStmt
+                   | ifStmt
+                   | returnStmt
+                   | whileStmt
+                   | block
+                   | importStmt
+                   | debugStmt
+                   | breakStmt
+exprStmt          -> expression ";"
+forStmt           -> "for" "(" (varDecl | exprStmt | ";")
                    expression? ";"
                    expression? ")" statement
-ifStmt          -> "if" "(" expression ")" statement
+ifStmt            -> "if" "(" expression ")" statement
                    ("else" statement)?
-returnStmt      -> "return" expression? ";"
-whileStmt       -> "while" "(" expression ")" statement
-block           -> "{" declaration* "}"
-importStmt      -> "import" (IDENTIFIER "."?)*
-debugStmt       -> "debug" ";"
-breakStmt       -> "break" ";"
+returnStmt        -> "return" expression? ";"
+whileStmt         -> "while" "(" expression ")" statement
+block             -> "{" declaration* "}"
+importStmt        -> "import" (IDENTIFIER "."?)*
+debugStmt         -> "debug" ";"
+breakStmt         -> "break" ";"
 
-expression      -> assignment
-assignment      -> (call ".")? IDENTIFIER "=" assignment
-                 | ternary
-ternary         -> logic_or "?" ternary : ternary
-logic_or        -> logic_and ("or" logic_and)*
-logic_and       -> equality ("and" equality)*
-equality        -> comparison (("!=", "--") comparison)*
-comparison      -> term ((">", ">=", "<", "<=") term)*
-term            -> factor (("+", "-") factor)*
-factor          -> unary (("*", "/") unary)*
-unary           -> ("!", "-") unary
-                 | call
-call            -> primary ("(" arguments? ")" | "." IDENTIFIER | "[" expression "]")*
-arguments       -> expression ("," expression)*
-primary         -> NUMBER | STRING | "true" | "false" | "nil"
-                 | "(" expression ")"
-                 | IDENTIFIER
-                 | "super" "." IDENTIFIER
-                 | "[" expression "]" "{" "}"
+expression        -> assignment
+assignment        -> (call ".")? IDENTIFIER "=" assignment
+                   | assignment_and_op
+assignment_and_op -> ternary (("+=" | "-=" "*=" | "/=")  ternary)*
+ternary           -> logic_or "?" ternary : ternary
+logic_or          -> logic_and ("or" logic_and)*
+logic_and         -> equality ("and" equality)*
+equality          -> comparison (("!=" | "--") comparison)*
+comparison        -> term ((">" | ">=" | "<" | "<=") term)*
+term              -> factor (("+" | "-") factor)*
+factor            -> unary (("*" | "/") unary)*
+unary             -> ("!" | "-") unary
+                   | call
+call              -> primary ("(" arguments? ")" | "." IDENTIFIER | "[" expression "]")*
+arguments         -> expression ("," expression)*
+primary           -> NUMBER | STRING | "true" | "false" | "nil"
+                   | "(" expression ")"
+                   | IDENTIFIER
+                   | "super" "." IDENTIFIER
+                   | "[" expression "]" "{" "}"

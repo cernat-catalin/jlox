@@ -28,10 +28,12 @@ import static ccs.jlox.ast.TokenType.LEFT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.LESS;
 import static ccs.jlox.ast.TokenType.LESS_EQUAL;
 import static ccs.jlox.ast.TokenType.MINUS;
+import static ccs.jlox.ast.TokenType.MINUS_EQUAL;
 import static ccs.jlox.ast.TokenType.NIL;
 import static ccs.jlox.ast.TokenType.NUMBER;
 import static ccs.jlox.ast.TokenType.OR;
 import static ccs.jlox.ast.TokenType.PLUS;
+import static ccs.jlox.ast.TokenType.PLUS_EQUAL;
 import static ccs.jlox.ast.TokenType.QUESTION_MARK;
 import static ccs.jlox.ast.TokenType.RETURN;
 import static ccs.jlox.ast.TokenType.RIGHT_BRACE;
@@ -39,7 +41,9 @@ import static ccs.jlox.ast.TokenType.RIGHT_PAREN;
 import static ccs.jlox.ast.TokenType.RIGHT_SQUARE_BRACKET;
 import static ccs.jlox.ast.TokenType.SEMICOLON;
 import static ccs.jlox.ast.TokenType.SLASH;
+import static ccs.jlox.ast.TokenType.SLASH_EQUAL;
 import static ccs.jlox.ast.TokenType.STAR;
+import static ccs.jlox.ast.TokenType.STAR_EQUAL;
 import static ccs.jlox.ast.TokenType.STRING;
 import static ccs.jlox.ast.TokenType.SUPER;
 import static ccs.jlox.ast.TokenType.THIS;
@@ -114,10 +118,10 @@ public final class Scanner {
       case '}' -> addToken(RIGHT_BRACE);
       case ',' -> addToken(COMMA);
       case '.' -> addToken(DOT);
-      case '-' -> addToken(MINUS);
-      case '+' -> addToken(PLUS);
+      case '+' -> addToken(match('=') ? PLUS_EQUAL : PLUS);
+      case '-' -> addToken(match('=') ? MINUS_EQUAL : MINUS);
+      case '*' -> addToken(match('=') ? STAR_EQUAL : STAR);
       case ';' -> addToken(SEMICOLON);
-      case '*' -> addToken(STAR);
       case '?' -> addToken(QUESTION_MARK);
       case ':' -> addToken(COLON);
       case '!' -> addToken(match('=') ? BANG_EQUAL : BANG);
@@ -144,7 +148,7 @@ public final class Scanner {
     if (match('/')) {
       comment();
     } else {
-      addToken(SLASH);
+      addToken(match('=') ? SLASH_EQUAL: SLASH);
     }
   }
 

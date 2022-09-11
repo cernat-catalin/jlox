@@ -28,3 +28,20 @@ assert(a * b * 1.23 == 135.3, "Binary star operator wrong result!");
 
 assert(b / a == 1.1, "Binary slash operator wrong result!");
 assert(b / a / 0.2 == 5.5, "Binary slash operator wrong result!");
+
+
+var x = 10;
+assert((x += 11) == 21, "Binary plus equals operator wrong result!");
+assert(x == 21, "Binary plus equals operator wrong result!");
+
+x = 10;
+assert((x -= 5) == 5, "Binary minus equals operator wrong result!");
+assert(x == 5, "Binary minus equals operator wrong result!");
+
+x = 10;
+assert((x *= 12) == 120, "Binary minus equals operator wrong result!");
+assert(x == 120, "Binary minus equals operator wrong result!");
+
+x = 10;
+assert((x /= 2) == 5, "Binary minus equals operator wrong result!");
+assert(x == 5, "Binary minus equals operator wrong result!");
