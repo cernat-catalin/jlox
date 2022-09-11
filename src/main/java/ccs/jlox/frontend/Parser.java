@@ -5,6 +5,7 @@ import static ccs.jlox.ast.TokenType.AS;
 import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
 import static ccs.jlox.ast.TokenType.CLASS;
+import static ccs.jlox.ast.TokenType.COLON;
 import static ccs.jlox.ast.TokenType.COMMA;
 import static ccs.jlox.ast.TokenType.DEBUG;
 import static ccs.jlox.ast.TokenType.DOT;
@@ -30,6 +31,7 @@ import static ccs.jlox.ast.TokenType.NIL;
 import static ccs.jlox.ast.TokenType.NUMBER;
 import static ccs.jlox.ast.TokenType.OR;
 import static ccs.jlox.ast.TokenType.PLUS;
+import static ccs.jlox.ast.TokenType.QUESTION_MARK;
 import static ccs.jlox.ast.TokenType.RETURN;
 import static ccs.jlox.ast.TokenType.RIGHT_BRACE;
 import static ccs.jlox.ast.TokenType.RIGHT_PAREN;
@@ -265,7 +267,7 @@ public final class Parser {
   }
 
   private Expr assignment() {
-    Expr expr = or();
+    Expr expr = ternary();
 
     // XXX: simplify
     if (match(EQUAL)) {
@@ -281,6 +283,17 @@ public final class Parser {
       error(equals, "Invalid assignment target.");
     }
 
+    return expr;
+  }
+
+  private Expr ternary() {
+    Expr expr = or();
+    if (match(QUESTION_MARK)) {
+      Expr left = ternary();
+      Token colon = consume(COLON, "Expected ':' in ternary expression");
+      Expr right = ternary();
+      return new Expr.Ternary(expr, left, colon, right);
+    }
     return expr;
   }
 

@@ -184,6 +184,7 @@ public final class Interpreter {
       case Expr.Assignment assignment -> evaluateAssignmentExpr(assignment);
       case Expr.Unary unary -> evaluateUnaryExpr(unary);
       case Expr.Binary binary -> evaluateBinaryExpr(binary);
+      case Expr.Ternary ternary -> evaluateTernaryExpr(ternary);
       case Expr.Grouping group -> evaluateGroupingExpr(group);
       case Expr.Call call -> evaluateCallExpr(call);
       case Expr.Get get -> evaluateGetExpr(get);
@@ -319,6 +320,16 @@ public final class Interpreter {
       }
       default -> new IllegalStateException();
     };
+  }
+
+  private Object evaluateTernaryExpr(Expr.Ternary ternaryExpr) {
+    Object condition = evaluate(ternaryExpr.condition());
+
+    if (isTruthy(condition)) {
+      return evaluate(ternaryExpr.left());
+    } else {
+      return evaluate(ternaryExpr.right());
+    }
   }
 
   private Object evaluateGroupingExpr(Expr.Grouping groupExpr) {

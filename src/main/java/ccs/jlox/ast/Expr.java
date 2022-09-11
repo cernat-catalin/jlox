@@ -5,6 +5,8 @@ import java.util.List;
 public sealed interface Expr {
   record Binary(Expr left, Token operator, Expr right) implements Expr {}
 
+  record Ternary(Expr condition, Expr left, Token colon, Expr right) implements Expr {}
+
   // We keep the token paren here for error reporting
   record Call(Expr callee, Token paren, List<Expr> arguments) implements Expr {}
 

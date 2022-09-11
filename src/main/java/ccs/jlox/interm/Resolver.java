@@ -178,6 +178,7 @@ public class Resolver {
       case Expr.Assignment assignment -> resolveAssignExpr(assignment);
       case Expr.Unary unary -> resolveUnaryExpr(unary);
       case Expr.Binary binary -> resolveBinaryExpr(binary);
+      case Expr.Ternary ternary -> resolveTernaryExpr(ternary);
       case Expr.Grouping group -> resolveGroupingExpr(group);
       case Expr.Call call -> resolveCallExpr(call);
       case Expr.Get get -> resolveGetExpr(get);
@@ -245,6 +246,12 @@ public class Resolver {
   }
 
   private void resolveBinaryExpr(Expr.Binary expr) {
+    resolve(expr.left());
+    resolve(expr.right());
+  }
+
+  private void resolveTernaryExpr(Expr.Ternary expr) {
+    resolve(expr.condition());
     resolve(expr.left());
     resolve(expr.right());
   }

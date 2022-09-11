@@ -16,7 +16,7 @@ final class LoxTest {
   void runLangTests() throws IOException {
     for (File file : getFilesInDir("tests/lang")) {
       if (file.getName().endsWith("_test.lox")) {
-        //        if (!file.getName().equals("import_test.lox")) continue;
+        //                if (!file.getName().startsWith("ternary")) continue;
         LOG.info("Running tests in file: {}", file.getName());
         runTestFile(file);
       }

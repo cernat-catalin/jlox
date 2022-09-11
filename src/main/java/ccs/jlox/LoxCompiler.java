@@ -98,5 +98,6 @@ public final class LoxCompiler {
     String loadSource(String fullyQualifiedName) throws IOException;
   }
 
-  record SingleFileOutput(List<Stmt> stmts, Map<Integer, VariableLocation> locals, List<String> imports) {}
+  record SingleFileOutput(
+      List<Stmt> stmts, Map<Integer, VariableLocation> locals, List<String> imports) {}
 }
