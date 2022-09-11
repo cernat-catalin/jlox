@@ -21,11 +21,11 @@ assert(x[90] == 90, "Array wrong result!");
 assert(x[a] == "A", "Array wrong result!");
 assert(x[40 + 50] == 90, "Array wrong result!");
 
-for (var j = 0; j < 100; j = j + 1) {
+for (var j = 0; j < 100; j += 1) {
   x[j] = j;
 }
 
-for (var i = 0; i < 100; i = i + 1) {
+for (var i = 0; i < 100; i += 1) {
   assert(x[i] == i, "Array wrong result!");
 }
 

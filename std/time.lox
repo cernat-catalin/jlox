@@ -9,6 +9,6 @@ class Time {
   }
 
   add_millis(millis) {
-    this.time = this.time + millis;
+    this.time += millis;
   }
 }

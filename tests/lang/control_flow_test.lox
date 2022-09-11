@@ -14,7 +14,7 @@ assert(a == 3, "Control flow wrong result!");
 
 var x1 = 0;
 while (x1 < 10) {
- x1 = x1 + 1;
+ x1 += 1;
  if (x1 == 5) break;
 }
 assert(x1 == 5, "Control flow wrong result!");
@@ -23,26 +23,26 @@ var x2 = 0;
 while (x2 < 10) {
   var x3 = 0;
   while (x3 < 10) {
-    x3 = x3 + 1;
+    x3 += 1;
     if (x3 == 2) break;
   }
   assert(x3 == 2, "Control flow wrong result!");
-  x2 = x2 + 1;
+  x2 += 1;
 }
 assert(x2 == 10, "Control flow wrong result!");
 
 
 var x4 = 0;
-for (; x4 < 10; x4 = x4 + 1) {
+for (; x4 < 10; x4 += 1) {
  if (x4 == 7) break;
 }
 assert(x4 == 7, "Control flow wrong result!");
 
 
 var x5 = 0;
-for (; x5 < 10; x5 = x5 + 1) {
+for (; x5 < 10; x5 += 1) {
   var x6 = 0;
-  for (; x6 < 10; x6 = x6 + 1) {
+  for (; x6 < 10; x6 += 1) {
     if (x6 == 3) break;
   }
   assert(x6 == 3, "Control flow wrong result!");

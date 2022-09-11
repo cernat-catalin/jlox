@@ -9,10 +9,10 @@ class List {
 
   add(elem) {
     if (this.size == this.capacity) {
-      this.capacity = this.capacity * 2;
+      this.capacity *= 2;
       this.new_data = [this.capacity]{};
 
-      for (var i = 0; i < this.size; i = i + 1) {
+      for (var i = 0; i < this.size; i += 1) {
         this.new_data[i] = this.data[i];
       }
 
@@ -20,12 +20,12 @@ class List {
     }
 
     this.data[this.size] = elem;
-    this.size = this.size + 1;
+    this.size += 1;
   }
 
   remove() {
     if (this.size != 0) {
-      this.size = this.size - 1;
+      this.size -= 1;
       return this.data[this.size];
     }
 
