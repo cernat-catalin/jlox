@@ -2,6 +2,7 @@ package ccs.jlox.frontend;
 
 import static ccs.jlox.ast.TokenType.AND;
 import static ccs.jlox.ast.TokenType.AS;
+import static ccs.jlox.ast.TokenType.BACKSLASH;
 import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
 import static ccs.jlox.ast.TokenType.BREAK;
@@ -126,26 +127,13 @@ public final class Parser {
 
   private Stmt.Function funDeclaration(String kind) {
     Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+
     consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
-    List<Token> parameters = new ArrayList<>();
-    if (!check(RIGHT_PAREN)) {
-      do {
-        if (parameters.size() >= 255) {
-          error(peek(), "Can't have more than 255 parameters.");
-        }
-        parameters.add(consume(IDENTIFIER, "Expect parameter name."));
-      } while (match(COMMA));
-    }
+    List<Token> parameters = functionParameters();
     consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-    consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
-    List<Stmt> body = new ArrayList<>();
-    while (!check(RIGHT_BRACE) && !isAtEnd()) {
-      body.add(declaration());
-    }
-    consume(RIGHT_BRACE, "Expect '}' after block.");
-
-    return new Stmt.Function(name, parameters, body);
+    List<Stmt> body = functionBody(kind);
+    return new Stmt.Function(name, new Expr.Function(parameters, body));
   }
 
   private Stmt statement() {
@@ -319,20 +307,7 @@ public final class Parser {
       Expr newValue = new Expr.Binary(expr, singleOperator, right);
       expr = new Expr.Assignment(expr, operator, newValue);
     }
-
-    //    while (match(OR)) {
-    //      Token operator = previous();
-    //      Expr right = and();
-    //      expr = new Expr.Logical(expr, operator, right);
-    //    }
     return expr;
-
-    //    if (match(BANG, MINUS)) {
-    //      Token operator = previous();
-    //      Expr right = unary();
-    //      return new Expr.Unary(operator, right);
-    //    }
-    //    return call();
   }
 
   private Expr ternary() {
@@ -478,8 +453,46 @@ public final class Parser {
       consume(RIGHT_BRACE, "Expect closing brace in array creation.");
       return new Expr.ArrayCreation(size, rightBracket);
     }
+    if (match(BACKSLASH)) return lambda();
 
     throw error(peek(), "Expect expression.");
+  }
+
+  private Expr lambda() {
+    // XXX: Is this error message still correct for anonymous functions?
+    Token arrow = previous();
+    List<Token> parameters = functionParameters();
+
+    if (check(LEFT_BRACE)) {
+      List<Stmt> body = functionBody("anonymous_fn");
+      return new Expr.Function(parameters, body);
+    } else {
+      Expr expr = expression();
+      return new Expr.Function(parameters, List.of(new Stmt.Return(arrow, expr)));
+    }
+  }
+
+  private List<Token> functionParameters() {
+    List<Token> parameters = new ArrayList<>();
+    if (!check(RIGHT_PAREN)) {
+      do {
+        if (parameters.size() >= 255) {
+          error(peek(), "Can't have more than 255 parameters.");
+        }
+        parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+      } while (match(COMMA));
+    }
+    return parameters;
+  }
+
+  private List<Stmt> functionBody(String kind) {
+    consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+    List<Stmt> body = new ArrayList<>();
+    while (!check(RIGHT_BRACE) && !isAtEnd()) {
+      body.add(declaration());
+    }
+    consume(RIGHT_BRACE, "Expect '}' after block.");
+    return body;
   }
 
   // Helper functions

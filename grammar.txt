@@ -65,3 +65,4 @@ primary           -> NUMBER | STRING | "true" | "false" | "nil"
                    | IDENTIFIER
                    | "super" "." IDENTIFIER
                    | "[" expression "]" "{" "}"
+                   | "\" ( parameters? ) "->" (expression | block)

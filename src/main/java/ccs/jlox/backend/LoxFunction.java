@@ -1,20 +1,26 @@
 package ccs.jlox.backend;
 
-import ccs.jlox.ast.Stmt;
+import ccs.jlox.ast.Expr;
 import ccs.jlox.ast.Token;
 import ccs.jlox.interm.VariableLocation;
 import java.util.List;
 
 final class LoxFunction implements LoxCallable {
   private final String namespace;
-  private final Stmt.Function declaration;
+  private final String name;
+  private final Expr.Function functionExpr;
   private final Environment closure;
   private final boolean isInitializer;
 
   LoxFunction(
-      String namespace, Stmt.Function declaration, Environment closure, boolean isInitializer) {
+      String namespace,
+      String name,
+      Expr.Function functionExpr,
+      Environment closure,
+      boolean isInitializer) {
+    this.name = name;
     this.namespace = namespace;
-    this.declaration = declaration;
+    this.functionExpr = functionExpr;
     this.closure = closure;
     this.isInitializer = isInitializer;
   }
@@ -22,13 +28,13 @@ final class LoxFunction implements LoxCallable {
   @Override
   public Object call(Interpreter interpreter, Token callSite, List<Object> arguments) {
     Environment environment = new Environment(closure);
-    for (int i = 0; i < declaration.params().size(); i++) {
+    for (int i = 0; i < functionExpr.params().size(); i++) {
       environment.define(arguments.get(i));
     }
     String previousNamespace = interpreter.getCurrentNamespace();
     try {
       interpreter.setCurrentNamespace(namespace);
-      interpreter.executeBlock(declaration.body(), environment);
+      interpreter.executeBlock(functionExpr.body(), environment);
     } catch (Return returnValue) {
       if (isInitializer) {
         // XXX: Hacky. We know that this was the first thing defined in the closure environment
@@ -48,16 +54,16 @@ final class LoxFunction implements LoxCallable {
     Environment environment = new Environment(closure);
     // Define "this"
     environment.define(instance);
-    return new LoxFunction(namespace, declaration, environment, isInitializer);
+    return new LoxFunction(namespace, name, functionExpr, environment, isInitializer);
   }
 
   @Override
   public int arity() {
-    return declaration.params().size();
+    return functionExpr.params().size();
   }
 
   @Override
   public String toString() {
-    return String.format("<fn %s>", declaration.name().lexeme());
+    return String.format("<fn %s>", name);
   }
 }

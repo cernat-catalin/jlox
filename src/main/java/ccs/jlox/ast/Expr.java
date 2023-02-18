@@ -32,4 +32,7 @@ public sealed interface Expr {
   record ArrayCreation(Expr size, Token rightBracket) implements Expr {}
 
   record ArrayIndex(Expr array, Token rightParen, Expr idx) implements Expr {}
+
+  // XXX: Is this circular dependency Expr <-> Stmt okay?
+  record Function(List<Token> params, List<Stmt> body) implements Expr {}
 }

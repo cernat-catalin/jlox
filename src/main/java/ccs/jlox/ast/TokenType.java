@@ -2,6 +2,7 @@ package ccs.jlox.ast;
 
 public enum TokenType {
   // single character tokens
+  BACKSLASH,
   LEFT_PAREN,
   RIGHT_PAREN,
   LEFT_SQUARE_BRACKET,
@@ -15,6 +16,7 @@ public enum TokenType {
   COLON,
 
   // one or two character tokens
+  ARROW,
   PLUS,
   PLUS_EQUAL,
   STAR,

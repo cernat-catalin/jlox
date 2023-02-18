@@ -120,7 +120,7 @@ public class Resolver {
       if (method.name().lexeme().equals("init")) {
         declaration = FunctionType.INITIALIZER;
       }
-      resolveFunction(method, declaration);
+      resolveFunction(method.function(), declaration);
     }
 
     endScope();
@@ -135,19 +135,19 @@ public class Resolver {
   private void resolveFunctionStmt(Stmt.Function stmt) {
     declare(stmt.name());
     define(stmt.name());
-    resolveFunction(stmt, FunctionType.FUNCTION);
+    resolveFunction(stmt.function(), FunctionType.FUNCTION);
   }
 
-  private void resolveFunction(Stmt.Function function, FunctionType type) {
+  private void resolveFunction(Expr.Function functionExpr, FunctionType type) {
     FunctionType enclosingFunction = currentFunction;
     currentFunction = type;
 
     beginScope();
-    for (Token param : function.params()) {
+    for (Token param : functionExpr.params()) {
       declare(param);
       define(param);
     }
-    _resolve(function.body());
+    _resolve(functionExpr.body());
     endScope();
 
     currentFunction = enclosingFunction;
@@ -191,6 +191,7 @@ public class Resolver {
       case Expr.Super superExpr -> resolveSuperExpr(superExpr);
       case Expr.ArrayCreation arrayCExpr -> resolveArrayCreationExpr(arrayCExpr);
       case Expr.ArrayIndex arrayIndex -> resolveArrayIndexExpr(arrayIndex);
+      case Expr.Function functionExpr -> resolveFunctionExpr(functionExpr);
     }
   }
 
@@ -302,6 +303,10 @@ public class Resolver {
     resolve(arrayIndexExpr.array());
     resolve(arrayIndexExpr.idx());
     // XXX: Need to do something here ?
+  }
+
+  private void resolveFunctionExpr(Expr.Function functionExpr) {
+    resolveFunction(functionExpr, FunctionType.FUNCTION);
   }
 
   private void beginScope() {

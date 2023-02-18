@@ -11,7 +11,7 @@ public sealed interface Stmt {
 
   record Var(Token name, Expr initializer) implements Stmt {}
 
-  record Function(Token name, List<Token> params, List<Stmt> body) implements Stmt {}
+  record Function(Token name, Expr.Function function) implements Stmt {}
 
   record Class(Token name, Expr.Variable superclass, List<Function> methods) implements Stmt {}
 

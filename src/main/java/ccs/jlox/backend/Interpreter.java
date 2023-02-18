@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public final class Interpreter {
@@ -94,7 +95,13 @@ public final class Interpreter {
   }
 
   private void executeFunctionStmt(Stmt.Function functionStmt) {
-    LoxFunction function = new LoxFunction(currentNamespace, functionStmt, getEnvironment(), false);
+    LoxFunction function =
+        new LoxFunction(
+            currentNamespace,
+            functionStmt.name().lexeme(),
+            functionStmt.function(),
+            getEnvironment(),
+            false);
     define(functionStmt.name().lexeme(), function);
   }
 
@@ -118,7 +125,11 @@ public final class Interpreter {
     for (Stmt.Function method : classStmt.methods()) {
       LoxFunction function =
           new LoxFunction(
-              currentNamespace, method, getEnvironment(), method.name().lexeme().equals("init"));
+              currentNamespace,
+              method.name().lexeme(),
+              method.function(),
+              getEnvironment(),
+              method.name().lexeme().equals("init"));
       methods.put(method.name().lexeme(), function);
     }
 
@@ -201,6 +212,7 @@ public final class Interpreter {
       case Expr.Super superExpr -> evaluateSuperExpr(superExpr);
       case Expr.ArrayCreation arrayCExpr -> evaluateArrayCreationExpr(arrayCExpr);
       case Expr.ArrayIndex arrayIndexExpr -> evaluateArrayIndexExpr(arrayIndexExpr);
+      case Expr.Function functionExpr -> evaluateFunctionExpr(functionExpr);
     };
   }
 
@@ -426,6 +438,12 @@ public final class Interpreter {
     }
 
     throw new RuntimeError(arrayIndexExpr.rightParen().line(), "Cannot index non array object.");
+  }
+
+  private Object evaluateFunctionExpr(Expr.Function functionExpr) {
+    // XXX: Keep UUID for name?
+    return new LoxFunction(
+        currentNamespace, UUID.randomUUID().toString(), functionExpr, getEnvironment(), false);
   }
 
   private LoxModule getCurrentModule() {

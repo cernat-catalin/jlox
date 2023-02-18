@@ -1,7 +1,9 @@
 package ccs.jlox.frontend;
 
 import static ccs.jlox.ast.TokenType.AND;
+import static ccs.jlox.ast.TokenType.ARROW;
 import static ccs.jlox.ast.TokenType.AS;
+import static ccs.jlox.ast.TokenType.BACKSLASH;
 import static ccs.jlox.ast.TokenType.BANG;
 import static ccs.jlox.ast.TokenType.BANG_EQUAL;
 import static ccs.jlox.ast.TokenType.BREAK;
@@ -119,7 +121,7 @@ public final class Scanner {
       case ',' -> addToken(COMMA);
       case '.' -> addToken(DOT);
       case '+' -> addToken(match('=') ? PLUS_EQUAL : PLUS);
-      case '-' -> addToken(match('=') ? MINUS_EQUAL : MINUS);
+      case '-' -> handleMinus();
       case '*' -> addToken(match('=') ? STAR_EQUAL : STAR);
       case ';' -> addToken(SEMICOLON);
       case '?' -> addToken(QUESTION_MARK);
@@ -129,6 +131,7 @@ public final class Scanner {
       case '<' -> addToken(match('=') ? LESS_EQUAL : LESS);
       case '>' -> addToken(match('=') ? GREATER_EQUAL : GREATER);
       case '/' -> handleSlash();
+      case '\\' -> addToken(BACKSLASH);
       case ' ', '\r', '\t' -> handleWhiteSpace();
       case '\n' -> incrementLine();
       case '"' -> string();
@@ -142,6 +145,16 @@ public final class Scanner {
 
   private void handleWhiteSpace() {
     // NO-OP
+  }
+
+  private void handleMinus() {
+    if (match('=')) {
+      addToken(MINUS_EQUAL);
+    } else if (match('>')) {
+      addToken(ARROW);
+    } else {
+      addToken(MINUS);
+    }
   }
 
   private void handleSlash() {
